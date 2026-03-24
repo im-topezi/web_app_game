@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Login
+        </title>
+    </head>
+    <body>
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+        <b>Login</b>
+        <form action="/login" method="post">
+            <input type="text" name="username" value="{{ username }}" placeholder="username"/>
+            <input type="password" name="password" placeholder="password"/>
+            <input type="submit" value="Login"/>
+        </form>
+    </body>
+</html>

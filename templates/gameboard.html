@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Welcome to game
+        </title>
+    </head>
+    <body>
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+        <a href="/inventory">Inventory</a>
+        {%if connected.north %}
+        Go North
+        {%endif%}
+        {%if connected.south %}
+        Go South
+        {%endif%}
+        {%if connected.east %}
+        Go East
+        {%endif%}
+        {%if connected.west %}
+        Go West
+        {%endif%}
+
+        {% for npc in npcs %}
+                <p>
+                    <b>{{ npc }}</b>
+                </p>
+        {% endfor %}
+        {% for object in objects %}
+                <p>
+                    <b>{{ object }}</b>
+                </p>
+        {% endfor %}
+    </body>
+</html>
