@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="/static/game.css">
         <title>
             Welcome to game
         </title>
@@ -11,18 +12,30 @@
             <b>{{ message }}</b>
         </p>
         {% endfor %}
-        <a href="/inventory">Inventory</a>
+        <div class="inventory">
+            <a href="/inventory">Inventory</a>
+        </div>
+        
         {%if connected.north %}
-        Go North
+        <div class="north">
+            Go north
+        </div>
+        
         {%endif%}
         {%if connected.south %}
-        Go South
+        <div class="south">
+            Go south
+        </div>
         {%endif%}
         {%if connected.east %}
-        Go East
+        <div class="east">
+            Go east
+        </div>
         {%endif%}
         {%if connected.west %}
-        Go West
+        <div class="west">
+            Go west
+        </div>
         {%endif%}
 
         {% for npc in npcs %}

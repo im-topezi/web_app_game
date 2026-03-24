@@ -6,8 +6,8 @@ def tile_details(x,y):
     tile={
         "connected":{
             "north":True,
-            "south":False,
-            "east":False,
+            "south":True,
+            "east":True,
             "west":True
         },
         "objects":[

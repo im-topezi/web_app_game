@@ -1,0 +1,29 @@
+div.inventory {
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+div.north {
+  position: fixed;
+  top: 0;
+  right: 50%;
+}
+
+div.south {
+  position: fixed;
+  bottom: 0;
+  right: 50%;
+}
+
+div.east {
+  position: fixed;
+  top: 50%;
+  right: 0;
+}
+
+div.west {
+  position: fixed;
+  top: 50%;
+  left: 0;
+}
