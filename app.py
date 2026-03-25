@@ -64,5 +64,43 @@ def logout():
 @app.route("/play")
 @login_required
 def play():
-    tile=game.tile_details(0,0)
+    if hasattr(session,"location"):
+        player_coordinates=session["location"]
+    else:
+        player_coordinates=(0,0)
+        session["location"]=player_coordinates
+    tile=game.tile_details(player_coordinates)
     return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"])
+
+
+@app.route("/inventory")
+@login_required
+def inventory():
+    items=game.get_player_items(session["username"])
+    return render_template("inventory.html",items=items)
+
+
+@app.route("/loot",methods=["POST","GET"])
+@login_required
+def loot():
+    if request.method=="GET":
+        container_id=request.args.get("container_id")
+        if request.args.get("action")=="loot":
+            items=game.get_container_items(container_id)
+            return render_template("loot.html",items=items,container_id=container_id)
+        
+    if request.method=="POST":
+        item_id=request.form["item_id"]
+        container_id=request.form["container_id"]
+        game.take_item(item_id,session["username"])
+        items=game.get_container_items(container_id)
+        return redirect(f"/loot?action=loot&container_id={container_id}")
+    
+
+@app.route("/drop",methods=["POST"])
+@login_required
+def drop():
+        item_id=request.form["item_id"]
+        message=game.drop_item(item_id,session["username"])
+        flash(message)
+        return redirect("/inventory")

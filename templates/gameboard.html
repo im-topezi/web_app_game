@@ -40,12 +40,22 @@
 
         {% for npc in npcs %}
                 <p>
-                    <b>{{ npc }}</b>
+                    <b>{{ npc.npc_name }}</b>
                 </p>
         {% endfor %}
         {% for object in objects %}
                 <p>
-                    <b>{{ object }}</b>
+                    <form action="/loot" method="get">
+                        <b>{{ object.container_type }}</b>
+                        <label for="actions"></label>
+
+                        <select name="action" id="container_actions">
+                            <option value="loot">Loot</option>
+                        </select>
+                        <input type="hidden" name="container_id" value="{{ object.id }}"/>
+                        <input type="submit" value="Do action"/>
+                    </form>
+                    
                 </p>
         {% endfor %}
     </body>

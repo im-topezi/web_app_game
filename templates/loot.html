@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/game.css">
+        <title>
+            Welcome to game
+        </title>
+    </head>
+    <body>
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+        <div class="inventory">
+            <a href="/inventory">Inventory</a>
+        </div>
+        
+        {% for item in items %}
+                <p>
+                    <form action="/loot" method="post">
+                        <b>{{ item.item_name }}</b>
+                        <input type="hidden" name="container_id" value="{{container_id}}"/>
+                        <input type="hidden" name="item_id" value="{{item.id}}"/>
+                        <input type="submit" value="take"/>
+                    </form>
+                    
+                </p>
+        {% endfor %}
+    </body>
+</html>
