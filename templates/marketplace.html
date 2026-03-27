@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/game.css">
+        <title>
+            Welcome to marketplace
+        </title>
+        
+    </head>
+    <body>
+        <a href="/">&lt;&lt;</a>
+        <div class="inventory">
+            <a href="/inventory">Inventory</a>
+        </div>
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+
+        
+        {% for item in items %}
+                <p>
+                    <form action="/buy" method="post" >
+                        <b>{{ item.item_name }} </b>
+
+                        <input type="hidden" name="item_id" value="{{item.id}}"/>
+                        <input type="hidden" name="user" value="{{user}}"/>
+                        {%if item.username!=user%}
+                        <input type="submit" value="buy" onclick="return confirm('Buy {{item.item_name}} for {{item.marketplace_price}}?')" />
+                        {%else%}
+                         (Your listing)
+                        {%endif%}
+                        <div>Attributes:</div>
+                        <div>Price: {{item.marketplace_price}}</div>
+                    </form>
+                </p>
+        {% endfor %}
+    </body>
+</html>

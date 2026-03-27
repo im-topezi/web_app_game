@@ -21,13 +21,17 @@
 
         
         {% for item in items %}
-                <p>
+                <div>
                     <form action="/drop" method="post" >
                         <b>{{ item.item_name }}</b>
                         <input type="hidden" name="item_id" value="{{item.id}}"/>
                         <input type="submit" value="drop" onclick="return confirm('You will lose this item forever, are you sure?')" />
                     </form>
-                </p>
+                    <form action="/sell" method="get">
+                        <input type="hidden" name="item_id" value="{{item.id}}"/>
+                        <input type="submit" value="sell"/>
+                    </form>
+                </div>
         {% endfor %}
     </body>
 </html>

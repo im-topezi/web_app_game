@@ -22,7 +22,7 @@ def tile_details(coordinates):
 
 
 def get_player_items(username):
-    sql="SELECT * FROM items WHERE player=(SELECT id FROM users WHERE username=?)"
+    sql="SELECT * FROM items WHERE player=(SELECT id FROM users WHERE username=?) AND listed_for_sale!=TRUE"
     print(username)
     items=db.query(sql,[username])
     print(items)

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/game.css">
+        <title>
+            Welcome to game
+        </title>
+        
+    </head>
+    <body>
+
+        <a href="/inventory">&lt;&lt;</a>
+
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+
+                <p>
+                    <form action="/sell" method="post">
+                        {{item.item_name}}
+                        <input type="hidden" name="item_id" value="{{item.id}}"/>
+                        <input type="submit" value="sell"/>
+                    </form>
+                </p>
+    </body>
+</html>

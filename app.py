@@ -1,9 +1,10 @@
 from flask import Flask
 import modules.login as login
-from flask import redirect, render_template, request, flash, session
+from flask import redirect, render_template, request, flash, session, abort
 import modules.config as config
 from functools import wraps
 import modules.game as game
+import modules.marketplace as marketplace
 
 
 app = Flask(__name__)
@@ -77,7 +78,8 @@ def play():
 @login_required
 def inventory():
     items=game.get_player_items(session["username"])
-    return render_template("inventory.html",items=items,previous_page=request.referrer)
+    
+    return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer and "/sell" not in request.referrer else "")
 
 
 @app.route("/loot",methods=["POST","GET"])
@@ -104,3 +106,21 @@ def drop():
         message=game.drop_item(item_id,session["username"])
         flash(message)
         return redirect("/inventory")
+
+
+@app.route("/marketplace")
+@login_required
+def use_marketplace():
+    items=marketplace.get_listed_items()
+    return render_template("marketplace.html",items=items,user=session["username"])
+
+@app.route("/sell",methods=["GET","POST"])
+@login_required
+def sell():
+    if request.method=="GET":
+        item_id=request.args.get("item_id")
+        item=marketplace.check_item_owner(item_id,session["username"])
+        if item:
+            return render_template("sell.html",item=item[0])
+        else:
+            abort(403)

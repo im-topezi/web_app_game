@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="/static/game.css">
     </head>
     <body>
+        
         {% for message in get_flashed_messages() %}
         <p>
             <b>{{ message }}</b>
@@ -30,6 +31,7 @@
                 <input type="submit" value="Logout"/>
             </form>
         </p>
+        <a href="/marketplace"><button>Marketplace</button></a>
         <a href="/play"><button>Play</button></a>
         {%endif%}
     </body>
