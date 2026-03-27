@@ -77,7 +77,7 @@ def play():
 @login_required
 def inventory():
     items=game.get_player_items(session["username"])
-    return render_template("inventory.html",items=items)
+    return render_template("inventory.html",items=items,previous_page=request.referrer)
 
 
 @app.route("/loot",methods=["POST","GET"])
@@ -94,7 +94,7 @@ def loot():
         container_id=request.form["container_id"]
         game.take_item(item_id,session["username"])
         items=game.get_container_items(container_id)
-        return redirect(f"/loot?action=loot&container_id={container_id}")
+        return redirect(request.referrer)
     
 
 @app.route("/drop",methods=["POST"])

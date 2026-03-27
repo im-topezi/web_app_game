@@ -44,19 +44,25 @@
                 </p>
         {% endfor %}
         {% for object in objects %}
-                <p>
+                <div style="position: fixed;
+                top: 50%;
+                right: 50%;" class="{{object.container_type}}">
                     <form action="/loot" method="get">
                         <b>{{ object.container_type }}</b>
+                        <div>
                         <label for="actions"></label>
 
                         <select name="action" id="container_actions">
                             <option value="loot">Loot</option>
                         </select>
                         <input type="hidden" name="container_id" value="{{ object.id }}"/>
+                        </div>
+                        <div>
                         <input type="submit" value="Do action"/>
+                        </div>
                     </form>
                     
-                </p>
+                </div>
         {% endfor %}
     </body>
 </html>

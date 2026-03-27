@@ -5,16 +5,20 @@
         <title>
             Welcome to game
         </title>
+        
     </head>
     <body>
+        {%if previous_page%}
+        <a href="{{previous_page}}">&lt;&lt;</a>
+        {%else%}
+        <a href="/">&lt;&lt;</a>
+        {%endif%}
         {% for message in get_flashed_messages() %}
         <p>
             <b>{{ message }}</b>
         </p>
         {% endfor %}
-        <div class="inventory">
-            <a href="/inventory">Inventory</a>
-        </div>
+
         
         {% for item in items %}
                 <p>

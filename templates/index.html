@@ -4,6 +4,7 @@
         <title>
             Welcome to game
         </title>
+        <link rel="stylesheet" href="/static/game.css">
     </head>
     <body>
         {% for message in get_flashed_messages() %}
@@ -11,6 +12,9 @@
             <b>{{ message }}</b>
         </p>
         {% endfor %}
+        <div class="inventory">
+            <a href="/inventory">Inventory</a>
+        </div>
         Welcome
         {%if not session.username %}
         <p>
@@ -26,6 +30,7 @@
                 <input type="submit" value="Logout"/>
             </form>
         </p>
+        <a href="/play"><button>Play</button></a>
         {%endif%}
     </body>
 </html>

@@ -27,3 +27,21 @@ div.west {
   top: 50%;
   left: 0;
 }
+
+div.barrel{     
+    justify-content: center;align-items: center;
+    border: solid;
+    border-radius: 100%;
+    padding: 15px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+div.chest{     
+    justify-content: center;align-items: center;
+    border: solid;
+    padding-left: 50px;
+    padding-right: 50px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}

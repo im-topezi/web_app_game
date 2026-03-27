@@ -42,3 +42,7 @@ def drop_item(item_id,player):
     result=db.execute(sql,[player,item_id])
     if result=="success":
         return "Item dropped"
+
+
+def generate_container_placement():
+    pass
