@@ -1,7 +1,8 @@
 CREATE TABLE users (
 id INTEGER PRIMARY KEY,
 username TEXT UNIQUE,
-password_hash TEXT);
+password_hash TEXT),
+gold INTEGER DEFAULT 0;
 
 
 CREATE TABLE npcs (
@@ -29,7 +30,7 @@ item_owner INTEGER,
 player INTEGER,
 container INTEGER,
 price INTEGER,
-listed_for_sale BOOLEAN,
+listed_for_sale BOOLEAN DEFAULT FALSE,
 marketplace_price INTEGER,
 FOREIGN KEY (item_owner) REFERENCES npcs(id),
 FOREIGN KEY (player) REFERENCES users(id),
@@ -47,8 +48,7 @@ PRIMARY KEY (x_coordinate,y_coordinate)
 
 INSERT INTO tiles (x_coordinate,y_coordinate,tile_type) VALUES (0,0,"swamp");
 INSERT INTO containers (container_type,x_coordinate,y_coordinate) VALUES ("barrel",0,0);
-INSERT INTO npcs (npc_name,x_coordinate,y_coordinate) VALUES ("Ann",0,0);
+INSERT INTO npcs (npc_name,x_coordinate,y_coordinate) VALUES ("Test NPC",0,0);
 INSERT INTO items (item_name,item_owner,player,container) VALUES ("Ann's dagger",1,NULL,NULL);
-INSERT INTO items (item_name,item_owner,player,container) VALUES ("Rusty sword",NULL,NULL,1);
-INSERT INTO items (item_name,item_owner,player,container) VALUES ("Super sword",NULL,1,NULL);
-INSERT INTO items (item_name,item_owner,player,container,price,listed_for_sale,marketplace_price) VALUES ("Super sword",NULL,1,NULL,200,TRUE,400);
+INSERT INTO items (item_name,item_owner,player,container) VALUES ("Rusty sword",NULL,NULL,(SELECT containers.id FROM containers WHERE container_type="barrel"));
+INSERT INTO items (item_name,item_owner,player,container) VALUES ("Super sword",NULL,NULL,(SELECT containers.id FROM containers WHERE container_type="barrel"));

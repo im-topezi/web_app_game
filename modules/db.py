@@ -15,7 +15,6 @@ def execute(sql, parameters=[]):
         connection.close()
         return "success"
     except sqlite3.Error as error:
-        print(error)
         return error
     finally:
         connection.close()

@@ -8,8 +8,6 @@ def create_new_user(username,password1,password2):
     password_hash=generate_password_hash(password1)
     sql="INSERT INTO users (username, password_hash) VALUES (?,?)"
     result=db.execute(sql,[username,password_hash])
-    print(result)
-    print(type(result))
     if type(result) is sqlite3.IntegrityError:
         return "Username must be unique"
     if result=="success":

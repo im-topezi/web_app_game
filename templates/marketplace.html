@@ -17,7 +17,12 @@
             <b>{{ message }}</b>
         </p>
         {% endfor %}
-
+        <form action="/marketplace" method="get">
+            <div>
+                <input type="text" name="query" value="{{query}}" placeholder="Search..."/>
+            </div>
+            <input type="submit" value="Search"/>
+        </form>
         
         {% for item in items %}
                 <p>

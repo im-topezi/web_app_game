@@ -111,8 +111,10 @@ def drop():
 @app.route("/marketplace")
 @login_required
 def use_marketplace():
-    items=marketplace.get_listed_items()
+    query=request.args.get("query")
+    items=marketplace.get_listed_items(query)
     return render_template("marketplace.html",items=items,user=session["username"])
+
 
 @app.route("/sell",methods=["GET","POST"])
 @login_required
@@ -124,3 +126,26 @@ def sell():
             return render_template("sell.html",item=item[0])
         else:
             abort(403)
+    if request.method=="POST":
+        item_id=request.form["item_id"]
+        market_price=request.form["market_price"]
+        if int(market_price) < 1:
+            flash("Price has to be more than 0")
+            return redirect("/inventory")
+        item=marketplace.check_item_owner(item_id,session["username"])
+        if item:
+            result=marketplace.put_item_for_sale(item_id,market_price)
+            if result=="success":
+                flash(f"{item[0]["item_name"]} has been listed to the marketplace")
+            else:
+                flash(result)
+            return redirect("/inventory")
+        else:
+            abort(403)
+
+
+@app.route("/buy",methods=["POST"])
+@login_required
+def buy():
+    flash("Buying is not possible yet")
+    return redirect("/marketplace")
