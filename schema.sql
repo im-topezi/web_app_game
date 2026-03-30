@@ -5,6 +5,14 @@ password_hash TEXT),
 gold INTEGER DEFAULT 0;
 
 
+CREATE TABLE tiles (
+x_coordinate INTEGER,
+y_coordinate INTEGER,
+tile_type TEXT,
+PRIMARY KEY (x_coordinate,y_coordinate)
+);
+
+
 CREATE TABLE npcs (
 id INTEGER PRIMARY KEY,
 npc_name TEXT,
@@ -13,6 +21,8 @@ y_coordinate INTEGER,
 FOREIGN KEY (x_coordinate) REFERENCES tiles(x_coordinate),
 FOREIGN KEY (y_coordinate) REFERENCES tiles(y_coordinate)
 );
+
+
 
 CREATE TABLE containers (
 id INTEGER PRIMARY KEY,
@@ -37,12 +47,7 @@ FOREIGN KEY (player) REFERENCES users(id),
 FOREIGN KEY (container) REFERENCES containers(id)
 );
 
-CREATE TABLE tiles (
-x_coordinate INTEGER,
-y_coordinate INTEGER,
-tile_type TEXT,
-PRIMARY KEY (x_coordinate,y_coordinate)
-);
+
 
 
 
