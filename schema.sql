@@ -1,8 +1,9 @@
 CREATE TABLE users (
 id INTEGER PRIMARY KEY,
 username TEXT UNIQUE,
-password_hash TEXT),
-gold INTEGER DEFAULT 0;
+password_hash TEXT,
+gold INTEGER DEFAULT 0,
+CHECK (gold >= 0));
 
 
 CREATE TABLE tiles (
@@ -46,6 +47,15 @@ FOREIGN KEY (item_owner) REFERENCES npcs(id),
 FOREIGN KEY (player) REFERENCES users(id),
 FOREIGN KEY (container) REFERENCES containers(id)
 );
+
+"""CREATE TABLE transactions (
+    id INTEGER PRIMARY KEY,
+    item_id INTEGER,
+    buyer_id INTEGER,
+    seller_id INTEGER,
+    transaction_state TEXT,
+    time
+)"""
 
 
 

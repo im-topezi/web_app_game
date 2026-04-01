@@ -31,6 +31,7 @@
 
                         <input type="hidden" name="item_id" value="{{item.id}}"/>
                         <input type="hidden" name="user" value="{{user}}"/>
+                        <input type="hidden" name="seller" value="{{item.username}}"/>
                         {%if item.username!=user%}
                         <input type="submit" value="buy" onclick="return confirm('Buy {{item.item_name}} for {{item.marketplace_price}}?')" />
                         {%else%}

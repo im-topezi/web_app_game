@@ -1,6 +1,12 @@
 import sqlite3
 import modules.db as db
 
+
+def check_balance(item_id,username):
+    sql="SELECT users.id FROM users WHERE users.username=? AND users.gold>=(SELECT items.marketplace_price FROM items WHERE items.id=?)"
+    result=db.query(sql,[username,item_id])
+    return result[0] if result else False
+
 def get_listed_items(query):
     if not query:
         query=""
@@ -15,3 +21,11 @@ def check_item_owner(item_id,username):
 def put_item_for_sale(item_id,market_price):
     sql="UPDATE items SET listed_for_sale=TRUE,marketplace_price=? WHERE id=?"
     return db.execute(sql,[market_price,item_id])
+
+
+def trade_item(item_id,buyer_username,seller_username):
+    user_id=check_balance(item_id,buyer_username)
+    sql=
+
+
+
