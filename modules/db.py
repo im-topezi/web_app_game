@@ -10,10 +10,22 @@ def get_connection():
 def execute(sql, parameters=[]):
     connection = get_connection()
     try:
-        connection.execute(sql, parameters)
+        if type(sql)==str:
+            connection.execute(sql, parameters)
+
+        elif type(sql)==list:
+            
+            cursor=connection.cursor()
+            
+            cursor.execute("BEGIN TRANSACTION")
+            
+            for statement,parameter in zip(sql,parameters):
+                print(statement,parameter)
+                cursor.execute(statement,parameter)
+                
         connection.commit()
-        connection.close()
         return "success"
+            
     except sqlite3.Error as error:
         return error
     finally:

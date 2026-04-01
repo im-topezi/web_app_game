@@ -2,7 +2,7 @@ CREATE TABLE users (
 id INTEGER PRIMARY KEY,
 username TEXT UNIQUE,
 password_hash TEXT,
-gold INTEGER DEFAULT 0,
+gold INTEGER DEFAULT 0 NOT NULL,
 CHECK (gold >= 0));
 
 

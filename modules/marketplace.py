@@ -2,6 +2,11 @@ import sqlite3
 import modules.db as db
 
 
+def get_player_id(username):
+    sql="SELECT id FROM users WHERE users.username=?"
+    result=db.query(sql,[username])
+    return result[0]["id"]
+
 def check_balance(item_id,username):
     sql="SELECT users.id FROM users WHERE users.username=? AND users.gold>=(SELECT items.marketplace_price FROM items WHERE items.id=?)"
     result=db.query(sql,[username,item_id])
@@ -24,8 +29,20 @@ def put_item_for_sale(item_id,market_price):
 
 
 def trade_item(item_id,buyer_username,seller_username):
-    user_id=check_balance(item_id,buyer_username)
-    sql=
-
-
+    seller_id=get_player_id(seller_username)
+    buyer_id=get_player_id(buyer_username)
+    sql_take_money="UPDATE users SET gold= users.gold-(SELECT items.marketplace_price FROM items WHERE items.id=? AND items.player=?) WHERE users.username=?"
+    sql_give_money="UPDATE users SET gold= users.gold+(SELECT items.marketplace_price FROM items WHERE items.id=? AND items.player=?) WHERE users.username=?"
+    sql_transfer_item="UPDATE items SET player=?,listed_for_sale=FALSE WHERE items.id=? AND items.player=?"
+    sqls=[sql_take_money,sql_give_money,sql_transfer_item]
+    parameters=[[item_id,seller_id,buyer_username],[item_id,seller_id,seller_username],[buyer_id,item_id,seller_id]]
+    result=db.execute(sqls,parameters)
+    item=db.query("SELECT player,item_name FROM items WHERE items.id=?",[item_id])[0]
+    print(result)
+    if result=="success" and item["player"]==buyer_id:
+        return f"You've bought {item["item_name"]}"
+    elif "CHECK constraint failed: gold>=0"==result:
+        return "You don't have enough gold"
+    else:
+        return "Item not available"
 

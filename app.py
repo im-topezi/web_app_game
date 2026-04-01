@@ -149,6 +149,6 @@ def sell():
 def buy():
     item_id=request.form["item_id"]
     seller=request.form["seller"]
-    marketplace.trade_item(item_id,session["username"],seller)
-    flash("Buying is not possible yet")
+    result=marketplace.trade_item(item_id,session["username"],seller)
+    flash(result)
     return redirect("/marketplace")
