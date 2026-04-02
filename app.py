@@ -79,7 +79,7 @@ def play():
 def inventory():
     items=game.get_player_items(session["username"])
     
-    return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer and "/sell" not in request.referrer else "")
+    return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer else "")
 
 
 @app.route("/loot",methods=["POST","GET"])
