@@ -48,14 +48,6 @@ FOREIGN KEY (player) REFERENCES users(id),
 FOREIGN KEY (container) REFERENCES containers(id)
 );
 
-"""CREATE TABLE transactions (
-    id INTEGER PRIMARY KEY,
-    item_id INTEGER,
-    buyer_id INTEGER,
-    seller_id INTEGER,
-    transaction_state TEXT,
-    time
-)"""
 
 
 
