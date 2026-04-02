@@ -24,10 +24,10 @@ Goals for the project:
         - [ ] Players can fight NPC's
     - [ ] Players can loot NPC's
     - [ ] Players can pickpocket NPC's
-- [ ] Marketplace system
-    - [ ] Gold system
+- [x] Marketplace system
+    - [x] Gold system
         - [ ] Players can loot gold and sell items to certain NPC's
-    - [ ] Players can sell items they loot to other players through a marketplace system
+    - [x] Players can sell items they loot to other players through a marketplace system
 
 
 

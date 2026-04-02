@@ -39,10 +39,21 @@ def trade_item(item_id,buyer_username,seller_username):
     result=db.execute(sqls,parameters)
     item=db.query("SELECT player,item_name FROM items WHERE items.id=?",[item_id])[0]
     print(result)
-    if result=="success" and item["player"]==buyer_id:
+    if result==3 and item["player"]==buyer_id:
         return f"You've bought {item["item_name"]}"
-    elif "CHECK constraint failed: gold>=0"==result:
-        return "You don't have enough gold"
+    elif sqlite3.IntegrityError==type(result):
+        if str(result)=="CHECK constraint failed: gold >= 0":
+            return "You don't have enough gold"
     else:
         return "Item not available"
 
+def cancel_listing(item_id,username):
+    sql="UPDATE items SET listed_for_sale=FALSE WHERE items.id=? AND player=(SELECT id FROM users WHERE users.username=?)"
+    result=db.execute(sql,[item_id,username])
+    if result==1:
+        return "Listing canceled"
+    elif result==0:
+        return "Listing has already been sold"
+    else:
+        print(result)
+        return "Error"

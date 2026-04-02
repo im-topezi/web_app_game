@@ -26,20 +26,22 @@
         
         {% for item in items %}
                 <p>
+                    <b>{{ item.item_name }} </b>
+                    {%if item.username!=session.username%}
                     <form action="/buy" method="post" >
-                        <b>{{ item.item_name }} </b>
-
                         <input type="hidden" name="item_id" value="{{item.id}}"/>
-                        <input type="hidden" name="user" value="{{user}}"/>
                         <input type="hidden" name="seller" value="{{item.username}}"/>
-                        {%if item.username!=user%}
                         <input type="submit" value="buy" onclick="return confirm('Buy {{item.item_name}} for {{item.marketplace_price}}?')" />
-                        {%else%}
-                         (Your listing)
-                        {%endif%}
-                        <div>Attributes:</div>
-                        <div>Price: {{item.marketplace_price}}</div>
                     </form>
+                    {%else%}
+                        (Your listing)
+                        <form action="/cancel" method="post" >
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            <input type="submit" value="cancel" onclick="return confirm('Cancel the listing for {{item.item_name}} ?')" />
+                        </form>
+                    {%endif%}
+                    <div>Attributes:</div>
+                    <div>Price: {{item.marketplace_price}}</div>
                 </p>
         {% endfor %}
     </body>

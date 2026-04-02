@@ -35,12 +35,13 @@ def get_container_items(container_id):
 
 def take_item(item_id,player):
     sql="UPDATE items SET player=(SELECT id FROM users WHERE username=?), item_owner=NULL,container=NULL  WHERE id=?"
-    db.execute(sql,[player,item_id])
+    result=db.execute(sql,[player,item_id])
+    return result
 
 def drop_item(item_id,player):
     sql="DELETE FROM items WHERE player=(SELECT id FROM users WHERE username=?) AND id=?"
     result=db.execute(sql,[player,item_id])
-    if result=="success":
+    if result==1:
         return "Item dropped"
 
 

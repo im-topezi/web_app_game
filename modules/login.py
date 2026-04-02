@@ -10,7 +10,7 @@ def create_new_user(username,password1,password2):
     result=db.execute(sql,[username,password_hash])
     if type(result) is sqlite3.IntegrityError:
         return "Username must be unique"
-    if result=="success":
+    if result==1:
         return "User created succesfully"
     else:
         return "Database error"

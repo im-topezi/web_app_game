@@ -8,7 +8,7 @@
         
     </head>
     <body>
-        {%if previous_page%}
+        {%if previous_page and previous_page!="/inventory"%}
         <a href="{{previous_page}}">&lt;&lt;</a>
         {%else%}
         <a href="/">&lt;&lt;</a>

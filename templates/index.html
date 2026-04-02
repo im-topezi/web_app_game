@@ -13,9 +13,7 @@
             <b>{{ message }}</b>
         </p>
         {% endfor %}
-        <div class="inventory">
-            <a href="/inventory">Inventory</a>
-        </div>
+
         Welcome
         {%if not session.username %}
         <p>
@@ -26,6 +24,9 @@
         </p>
         {%else%}
         {{session.username}}
+        <div class="inventory">
+            <a href="/inventory">Inventory</a>
+        </div>
         <p>
             <form action="/logout" method="post">
                 <input type="submit" value="Logout"/>

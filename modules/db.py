@@ -24,7 +24,8 @@ def execute(sql, parameters=[]):
                 cursor.execute(statement,parameter)
                 
         connection.commit()
-        return "success"
+        rows_affected=connection.total_changes
+        return rows_affected
             
     except sqlite3.Error as error:
         return error

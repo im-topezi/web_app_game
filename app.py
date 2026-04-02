@@ -94,7 +94,9 @@ def loot():
     if request.method=="POST":
         item_id=request.form["item_id"]
         container_id=request.form["container_id"]
-        game.take_item(item_id,session["username"])
+        result=game.take_item(item_id,session["username"])
+        if result==1:
+            flash(f"{request.form["item_name"]} has been added to your inventory")
         items=game.get_container_items(container_id)
         return redirect(request.referrer)
     
@@ -113,7 +115,7 @@ def drop():
 def use_marketplace():
     query=request.args.get("query")
     items=marketplace.get_listed_items(query)
-    return render_template("marketplace.html",items=items,user=session["username"])
+    return render_template("marketplace.html",items=items)
 
 
 @app.route("/sell",methods=["GET","POST"])
@@ -135,7 +137,7 @@ def sell():
         item=marketplace.check_item_owner(item_id,session["username"])
         if item:
             result=marketplace.put_item_for_sale(item_id,market_price)
-            if result=="success":
+            if result==1:
                 flash(f"{item[0]["item_name"]} has been listed to the marketplace")
             else:
                 flash(result)
@@ -150,5 +152,14 @@ def buy():
     item_id=request.form["item_id"]
     seller=request.form["seller"]
     result=marketplace.trade_item(item_id,session["username"],seller)
+    flash(result)
+    return redirect("/marketplace")
+
+
+@app.route("/cancel",methods=["POST"])
+@login_required
+def cancel():
+    item_id=request.form["item_id"]
+    result=marketplace.cancel_listing(item_id,session["username"])
     flash(result)
     return redirect("/marketplace")
