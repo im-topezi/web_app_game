@@ -5,6 +5,7 @@ import modules.config as config
 from functools import wraps
 import modules.game as game
 import modules.marketplace as marketplace
+import modules.world_generation as world
 
 
 app = Flask(__name__)
@@ -22,6 +23,11 @@ def login_required(f):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/test")
+def test():
+    flash(world.World(300,session["username"],"test").generate_world())
+    return redirect("/")
 
 @app.route("/login",methods=["POST","GET"])
 def login_page():
@@ -87,9 +93,8 @@ def inventory():
 def loot():
     if request.method=="GET":
         container_id=request.args.get("container_id")
-        if request.args.get("action")=="loot":
-            items=game.get_container_items(container_id)
-            return render_template("loot.html",items=items,container_id=container_id)
+        items=game.get_container_items(container_id)
+        return render_template("loot.html",items=items,container_id=container_id)
         
     if request.method=="POST":
         item_id=request.form["item_id"]
