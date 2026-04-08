@@ -79,7 +79,7 @@ FOREIGN KEY (container) REFERENCES containers(id)
 
 
 
-INSERT INTO tiles (x_coordinate,y_coordinate,tile_type) VALUES (0,0,"swamp");
+
 INSERT INTO containers (container_type,x_coordinate,y_coordinate) VALUES ("barrel",0,0);
 INSERT INTO npcs (npc_name,x_coordinate,y_coordinate) VALUES ("Test NPC",0,0);
 INSERT INTO items (item_name,item_owner,player,container) VALUES ("Ann's dagger",1,NULL,NULL);

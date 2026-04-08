@@ -26,7 +26,7 @@ def index():
 
 @app.route("/test")
 def test():
-    flash(world.World(300,session["username"],"test").generate_world())
+    flash(world.World(3,session["username"],"test").generate_world())
     return redirect("/")
 
 @app.route("/login",methods=["POST","GET"])

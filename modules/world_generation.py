@@ -10,6 +10,15 @@ class World:
         self.player=player
         self.name=name
         self.paths=[]
+        self.save_world_to_database()
+
+
+    def save_world_to_database(self):
+        sql="""
+        INSERT INTO worlds (id,player,difficulty,world_name)
+        VALUES (?,(SELECT id FROM users WHERE username=?),?,?)
+        """
+        db.execute(sql,[self.world_id,self.player,self.difficulty,self.name])
 
     def get_tile_types(self):
         sql="""
@@ -112,12 +121,31 @@ class Tile:
         self.type=type
         self.npcs=[]
         self.containers=[]
+        self.save_tile_to_database()
 
+
+    def save_tile_to_database(self):
+        sql="""
+        INSERT INTO tiles (world_id,x_coordinate,y_coordinate,tile_type)
+        VALUES (?,?,?,?)
+        """
+        db.execute(sql,[self.world.world_id,self.x_coordinate,self.y_coordinate,self.type])
 
 class Path:
     def __init__(self,first_tile,second_tile):
         self.first_tile=first_tile
         self.second_tile=second_tile
+        self.save_path_to_database()
+
+
+    def save_path_to_database(self):
+        sql="""
+        INSERT INTO paths (first_tile,second_tile)
+        VALUES ((SELECT id FROM tiles WHERE x_coordinate=? AND y_coordinate=? AND world_id=?),(SELECT id FROM tiles WHERE x_coordinate=? AND y_coordinate=? AND world_id=?))
+        """
+        db.execute(sql,[self.first_tile.x_coordinate,self.first_tile.y_coordinate,self.first_tile.world.world_id,self.second_tile.x_coordinate,self.second_tile.y_coordinate,self.second_tile.world.world_id])
+        print(sql)
+
     def __str__(self):
         return f"Goes from {self.first_tile.x_coordinate},{self.first_tile.y_coordinate} to {self.second_tile.x_coordinate},{self.second_tile.y_coordinate}"
 
