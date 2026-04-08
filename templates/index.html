@@ -33,7 +33,34 @@
             </form>
         </p>
         <a href="/marketplace"><button>Marketplace</button></a>
-        <a href="/play"><button>Play</button></a>
+        <form action="/new_world" method="post">
+            World name:
+            <input type="text" name="world_name"/>
+            <input type="submit" value="Generate a new world!"/>
+        </form>
+        
+
+        {%for world in worlds%}
+        <div>
+            World name:
+            <b>{{world.world_name}}</b>
+            <div><i>id:{{world.id}}</i></div>
+            <div>Difficulty: {{world.difficulty}}</div>
+            <div>
+                {%if world.visited%}
+                <div>You have visited this world before!</div>
+                {%else%}
+                <div>You haven't visited this world yet!</div>
+                {%endif%}
+            </div>
+            <form action="/play" method="post">
+                <input type="hidden" name="world_id" value="{{world.id}}"/>
+                <input type="submit" value="Play!"/>
+            </form>
+        </div>
+        {%endfor%}
+
+
         {%endif%}
     </body>
 </html>

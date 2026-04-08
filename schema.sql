@@ -74,6 +74,13 @@ FOREIGN KEY (player) REFERENCES users(id),
 FOREIGN KEY (container) REFERENCES containers(id)
 );
 
+CREATE TABLE location (
+player INTEGER PRIMARY KEY,
+tile INTEGER,
+FOREIGN KEY (player) REFERENCES users(id),
+FOREIGN KEY (tile) REFERENCES tiles(id)
+);
+
 
 
 

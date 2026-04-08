@@ -1,9 +1,10 @@
 import sqlite3
 import modules.db as db
 
-def tile_details(coordinates):
-    x=coordinates[0]
-    y=coordinates[1]
+def tile_details(world_id,player):
+
+
+
     sql_npc="""
     SELECT * 
     FROM npcs 
@@ -79,3 +80,41 @@ def drop_item(item_id,player):
 
 def generate_container_placement():
     pass
+
+def get_user_worlds(username):
+    sql="""
+    SELECT *
+    FROM worlds
+    WHERE player=(SELECT id
+    FROM users WHERE username=?)
+    """
+    return db.query(sql,[username])
+
+def visit_world(world_id):
+    visit_sql="""
+    UPDATE worlds
+    SET visited=TRUE
+    WHERE id=?
+    """
+    db.execute(visit_sql,[world_id])
+
+    set_location_sql="""
+    INSERT INTO location (player,tile)
+    VALUES ((SELECT worlds.player,tiles.id 
+    FROM tiles 
+    LEFT JOIN worlds 
+    ON tiles.world_id=worlds.id
+    WHERE tiles.x_coordinate=0 AND tiles.y_coordinate=0 AND tiles.world_id=?))
+    """
+    db.execute(set_location_sql,[world_id])
+
+
+def check_if_in_game(username):
+    sql="""
+    SELECT tile
+    FROM locations
+    WHERE player=(SELECT id 
+    FROM users
+    WHERE username=?)
+    """
+    return db.query(sql,[username])

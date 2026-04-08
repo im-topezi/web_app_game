@@ -11,6 +11,7 @@ class World:
         self.name=name
         self.paths=[]
         self.save_world_to_database()
+        print(self.player)
 
 
     def save_world_to_database(self):

@@ -19,14 +19,33 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def cant_be_in_game(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("username"):
+            tile=game.check_if_in_game(session["username"])
+            if tile:
+                session["location"]=tile
+                return redirect("/play")
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    worlds=[]
+    if session.get("username"):
+        worlds=game.get_user_worlds(session["username"])
+    return render_template("index.html",worlds=worlds)
 
-@app.route("/test")
-def test():
-    flash(world.World(3,session["username"],"test").generate_world())
+@app.route("/new_world",methods=["POST"])
+@login_required
+def generate_new_world():
+    if request.form["world_name"]:
+        world.World(3,session["username"],request.form["world_name"]).generate_world()
+        flash("New world generated!")
+    else:
+        flash("World needs a name!")
     return redirect("/")
 
 @app.route("/login",methods=["POST","GET"])
@@ -68,16 +87,24 @@ def logout():
     return redirect("/")
 
 
-@app.route("/play")
+@app.route("/play", methods=["POST","GET"])
 @login_required
 def play():
-    if hasattr(session,"location"):
-        player_coordinates=session["location"]
-    else:
-        player_coordinates=(0,0)
-        session["location"]=player_coordinates
-    tile=game.tile_details(player_coordinates)
-    return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"])
+    if request.method=="GET":
+        if session.get("location"):
+            tile=game.tile_details(session["location"])
+            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"])
+        else:
+            flash("You're not on an adventure, choose a world to play!")
+            return redirect("/")
+
+    elif request.method=="POST":
+        world_id=request.form["world_id"]
+        location=game.visit_world(world_id)
+        session["location"]=
+        print(session["location"])
+        return redirect("/")
+
 
 
 @app.route("/inventory")
