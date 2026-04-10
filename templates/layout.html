@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/game.css">
+</head>
+
+<body>
+    <div>
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+    </div>
+
+  <div class="nav">
+    <nav>
+        {%if session.location%}
+        <ul>
+            <form action="/leave" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="submit" value="Leave world" onclick="return confirm('Are you sure you want to leave the world? You can come back, but you will have to start from the beginning')"/>
+            </form>
+        </ul>
+        {%endif%}
+        {% if session.username %}
+        <ul><a href="/logout"><button>Logout</button></a></ul>
+        <ul><a href="/inventory"><button>Inventory</button></a></ul>
+        {% else %}
+        <ul><a href="/login"><button>Login</button></a></ul>
+        <ul><a href="/register"><button>Register</button></a></ul>
+        {% endif %}
+      
+    </nav>
+  </div>
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+
+</html>

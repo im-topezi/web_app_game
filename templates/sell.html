@@ -1,29 +1,20 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet" href="/static/game.css">
-        <title>
-            Welcome to game
-        </title>
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
         
-    </head>
-    <body>
+{% block content %}
 
-        <a href="/inventory">&lt;&lt;</a>
+<a href="/inventory">&lt;&lt;</a>
 
-        {% for message in get_flashed_messages() %}
+
+
         <p>
-            <b>{{ message }}</b>
+            <form action="/sell" method="post">
+                {{item.item_name}}
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="number" name="market_price" placeholder="Price"/>
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                <input type="submit" value="sell"/>
+            </form>
         </p>
-        {% endfor %}
-
-                <p>
-                    <form action="/sell" method="post">
-                        {{item.item_name}}
-                        <input type="number" name="market_price" placeholder="Price"/>
-                        <input type="hidden" name="item_id" value="{{item.id}}"/>
-                        <input type="submit" value="sell"/>
-                    </form>
-                </p>
-    </body>
-</html>
+{% endblock %}

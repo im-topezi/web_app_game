@@ -75,7 +75,7 @@ FOREIGN KEY (container) REFERENCES containers(id)
 );
 
 CREATE TABLE location (
-player INTEGER PRIMARY KEY,
+player INTEGER UNIQUE NOT NULL,
 tile INTEGER,
 FOREIGN KEY (player) REFERENCES users(id),
 FOREIGN KEY (tile) REFERENCES tiles(id)
@@ -98,4 +98,5 @@ INSERT INTO tile_types(type_name,difficulty) VALUES ("City",0);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Swamp",20);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Dungeon",16);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Forest",5);
-INSERT INTO tile_types(type_name,difficulty) VALUES ("Village",NULL);
+INSERT INTO tile_types(type_name,difficulty) VALUES ("Village",0);
+INSERT INTO tile_types(type_name,difficulty) VALUES ("Mountain",25);

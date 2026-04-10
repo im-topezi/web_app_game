@@ -1,66 +1,46 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>
-            Welcome to game
-        </title>
-        <link rel="stylesheet" href="/static/game.css">
-    </head>
-    <body>
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
         
-        {% for message in get_flashed_messages() %}
-        <p>
-            <b>{{ message }}</b>
-        </p>
-        {% endfor %}
+{% block content %}
 
-        Welcome
-        {%if not session.username %}
-        <p>
-            <a href="/login"> Login </a>
-        </p>
-        <p>
-            <a href="/register"> Register </a>
-        </p>
-        {%else%}
-        {{session.username}}
-        <div class="inventory">
-            <a href="/inventory">Inventory</a>
-        </div>
-        <p>
-            <form action="/logout" method="post">
-                <input type="submit" value="Logout"/>
-            </form>
-        </p>
+    Welcome
+    {%if session.username %}
+    {{session.username}}
+    <div>
         <a href="/marketplace"><button>Marketplace</button></a>
-        <form action="/new_world" method="post">
-            World name:
-            <input type="text" name="world_name"/>
-            <input type="submit" value="Generate a new world!"/>
-        </form>
-        
+    </div>
+    
 
-        {%for world in worlds%}
+    <form action="/new_world" method="post">
+        World name:
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+        <input type="text" name="world_name"/>
+        <input type="submit" value="Generate a new world!"/>
+    </form>
+    
+
+    {%for world in worlds%}
+    <div>
+        World name:
+        <b>{{world.world_name}}</b>
+        <div><i>id:{{world.id}}</i></div>
+        <div>Difficulty: {{world.difficulty}}</div>
         <div>
-            World name:
-            <b>{{world.world_name}}</b>
-            <div><i>id:{{world.id}}</i></div>
-            <div>Difficulty: {{world.difficulty}}</div>
-            <div>
-                {%if world.visited%}
-                <div>You have visited this world before!</div>
-                {%else%}
-                <div>You haven't visited this world yet!</div>
-                {%endif%}
-            </div>
-            <form action="/play" method="post">
-                <input type="hidden" name="world_id" value="{{world.id}}"/>
-                <input type="submit" value="Play!"/>
-            </form>
+            {%if world.visited%}
+            <div>You have visited this world before!</div>
+            {%else%}
+            <div>You haven't visited this world yet!</div>
+            {%endif%}
         </div>
-        {%endfor%}
+        <form action="/play" method="post">
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+            <input type="hidden" name="world_id" value="{{world.id}}"/>
+            <input type="submit" value="Play!"/>
+        </form>
+    </div>
+    {%endfor%}
 
 
-        {%endif%}
-    </body>
-</html>
+    {%endif%}
+{% endblock %}

@@ -6,6 +6,7 @@ from functools import wraps
 import modules.game as game
 import modules.marketplace as marketplace
 import modules.world_generation as world
+import secrets
 
 
 app = Flask(__name__)
@@ -25,13 +26,20 @@ def cant_be_in_game(f):
         if session.get("username"):
             tile=game.check_if_in_game(session["username"])
             if tile:
-                session["location"]=tile
+                session["location"]=tile[0]["tile"]
                 return redirect("/play")
         return f(*args, **kwargs)
     return decorated_function
 
+def check_csrf():
+    if request.form["csrf_token"] != session["csrf_token"]:
+        abort(403)
+
+
+
 
 @app.route("/")
+@cant_be_in_game
 def index():
     worlds=[]
     if session.get("username"):
@@ -40,9 +48,11 @@ def index():
 
 @app.route("/new_world",methods=["POST"])
 @login_required
+@cant_be_in_game
 def generate_new_world():
+    check_csrf()
     if request.form["world_name"]:
-        world.World(3,session["username"],request.form["world_name"]).generate_world()
+        world.World(16,session["username"],request.form["world_name"]).generate_world()
         flash("New world generated!")
     else:
         flash("World needs a name!")
@@ -59,6 +69,7 @@ def login_page():
         password=request.form["password"]
         if login.login_succesfully(username,password):
             session["username"]=username
+            session["csrf_token"] = secrets.token_hex(16)
             flash(f"Succesfully logged in as {username}")
             return redirect("/")
         else:
@@ -81,9 +92,12 @@ def register():
             return render_template("register.html",username=username)
         
 
-@app.route("/logout",methods=["POST"])
+@app.route("/logout")
 def logout():
+    del session["csrf_token"]
     del session["username"]
+    if session.get("location"):
+        del session["location"]
     return redirect("/")
 
 
@@ -92,18 +106,23 @@ def logout():
 def play():
     if request.method=="GET":
         if session.get("location"):
+            print(session["location"])
             tile=game.tile_details(session["location"])
-            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"])
+            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"],tile_type=tile["tile_type"])
         else:
             flash("You're not on an adventure, choose a world to play!")
             return redirect("/")
 
     elif request.method=="POST":
         world_id=request.form["world_id"]
-        location=game.visit_world(world_id)
-        session["location"]=
-        print(session["location"])
-        return redirect("/")
+        location=game.visit_world(world_id,session["username"])
+        if location:
+            session["location"]=location[0]["tile"]
+            
+            return redirect("/play")
+        else:
+            flash("World is not available")
+            return redirect("/")
 
 
 
@@ -111,7 +130,6 @@ def play():
 @login_required
 def inventory():
     items=game.get_player_items(session["username"])
-    
     return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer else "")
 
 
@@ -124,6 +142,7 @@ def loot():
         return render_template("loot.html",items=items,container_id=container_id)
         
     if request.method=="POST":
+        check_csrf()
         item_id=request.form["item_id"]
         container_id=request.form["container_id"]
         result=game.take_item(item_id,session["username"])
@@ -136,6 +155,7 @@ def loot():
 @app.route("/drop",methods=["POST"])
 @login_required
 def drop():
+        check_csrf()
         item_id=request.form["item_id"]
         message=game.drop_item(item_id,session["username"])
         flash(message)
@@ -144,6 +164,7 @@ def drop():
 
 @app.route("/marketplace")
 @login_required
+@cant_be_in_game
 def use_marketplace():
     query=request.args.get("query")
     items=marketplace.get_listed_items(query)
@@ -152,6 +173,7 @@ def use_marketplace():
 
 @app.route("/sell",methods=["GET","POST"])
 @login_required
+@cant_be_in_game
 def sell():
     if request.method=="GET":
         item_id=request.args.get("item_id")
@@ -161,6 +183,7 @@ def sell():
         else:
             abort(403)
     if request.method=="POST":
+        check_csrf()
         item_id=request.form["item_id"]
         market_price=request.form["market_price"]
         if int(market_price) < 1:
@@ -180,7 +203,9 @@ def sell():
 
 @app.route("/buy",methods=["POST"])
 @login_required
+@cant_be_in_game
 def buy():
+    check_csrf()
     item_id=request.form["item_id"]
     seller=request.form["seller"]
     result=marketplace.trade_item(item_id,session["username"],seller)
@@ -190,8 +215,32 @@ def buy():
 
 @app.route("/cancel",methods=["POST"])
 @login_required
+@cant_be_in_game
 def cancel():
+    check_csrf()
     item_id=request.form["item_id"]
     result=marketplace.cancel_listing(item_id,session["username"])
     flash(result)
     return redirect("/marketplace")
+
+@app.route("/move",methods=["POST"])
+@login_required
+def move():
+    check_csrf()
+    target_tile=request.form["tile"]
+    current_tile=session["location"]
+    if game.move(target_tile,current_tile):
+        updated=game.update_location(current_tile,target_tile,session["username"])
+        if updated==1:
+            session["location"]=target_tile
+    return redirect("/play")
+
+
+@app.route("/leave", methods=["POST"])
+@login_required
+def leave():
+    check_csrf()
+    updated=game.update_location(session["location"],None,session["username"])
+    if updated==1:
+        del session["location"]
+    return redirect("/")

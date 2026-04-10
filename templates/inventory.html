@@ -1,37 +1,29 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet" href="/static/game.css">
-        <title>
-            Welcome to game
-        </title>
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
         
-    </head>
-    <body>
-        {%if previous_page and "/inventory" not in previous_page and "/sell" not in previous_page%}
-        <a href="{{previous_page}}">&lt;&lt;</a>
-        {%else%}
-        <a href="/">&lt;&lt;</a>
-        {%endif%}
-        {% for message in get_flashed_messages() %}
-        <p>
-            <b>{{ message }}</b>
-        </p>
-        {% endfor %}
+{% block content %}
 
-        
-        {% for item in items %}
-                <div>
-                    <form action="/drop" method="post" >
-                        <b>{{ item.item_name }}</b>
-                        <input type="hidden" name="item_id" value="{{item.id}}"/>
-                        <input type="submit" value="drop" onclick="return confirm('You will lose this item forever, are you sure?')" />
-                    </form>
-                    <form action="/sell" method="get">
-                        <input type="hidden" name="item_id" value="{{item.id}}"/>
-                        <input type="submit" value="sell"/>
-                    </form>
-                </div>
-        {% endfor %}
-    </body>
-</html>
+{%if previous_page and "/inventory" not in previous_page and "/sell" not in previous_page%}
+<a href="{{previous_page}}">&lt;&lt;</a>
+{%else%}
+<a href="/">&lt;&lt;</a>
+{%endif%}
+
+
+
+{% for item in items %}
+        <div>
+            <form action="/drop" method="post" >
+                <b>{{ item.item_name }}</b>
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                <input type="submit" value="drop" onclick="return confirm('You will lose this item forever, are you sure?')" />
+            </form>
+            <form action="/sell" method="get">
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                <input type="submit" value="sell"/>
+            </form>
+        </div>
+{% endfor %}
+{% endblock %}

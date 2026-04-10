@@ -1,66 +1,69 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <link rel="stylesheet" href="/static/game.css">
-        <title>
-            Welcome to game
-        </title>
-    </head>
-    <body>
-        {% for message in get_flashed_messages() %}
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
+        
+{% block content %}
+{%if connected.north %}
+<div class="north">
+    <form action="/move" method="post">
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+        <input type="hidden" name="tile" value="{{connected.north}}"/>
+        <input type="submit" value="Go north"/>
+    </form>
+    
+</div>
+
+{%endif%}
+{%if connected.south %}
+<div class="south">
+    <form action="/move" method="post">
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+        <input type="hidden" name="tile" value="{{connected.south}}"/>
+        <input type="submit" value="Go south"/>
+    </form>
+</div>
+{%endif%}
+{%if connected.east %}
+<div class="east">
+    <form action="/move" method="post">
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+        <input type="hidden" name="tile" value="{{connected.east}}"/>
+        <input type="submit" value="Go east"/>
+    </form>
+</div>
+{%endif%}
+{%if connected.west %}
+<div class="west">
+    <form action="/move" method="post">
+        <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+        <input type="hidden" name="tile" value="{{connected.west}}"/>
+        <input type="submit" value="Go west"/>
+    </form>
+</div>
+{%endif%}
+
+{% for npc in npcs %}
         <p>
-            <b>{{ message }}</b>
+            <b>{{ npc.npc_name }}</b>
         </p>
-        {% endfor %}
-        <div class="inventory">
-            <a href="/inventory">Inventory</a>
-        </div>
-        
-        {%if connected.north %}
-        <div class="north">
-            Go north
-        </div>
-        
-        {%endif%}
-        {%if connected.south %}
-        <div class="south">
-            Go south
-        </div>
-        {%endif%}
-        {%if connected.east %}
-        <div class="east">
-            Go east
-        </div>
-        {%endif%}
-        {%if connected.west %}
-        <div class="west">
-            Go west
-        </div>
-        {%endif%}
+{% endfor %}
+{% for object in objects %}
+        <div style="position: fixed;
+        top: 50%;
+        right: 50%;" class="{{object.container_type}}">
+            <form action="/loot" method="get">
+                <b>{{ object.container_type }}</b>
+                <div>
+                <label for="actions"></label>
 
-        {% for npc in npcs %}
-                <p>
-                    <b>{{ npc.npc_name }}</b>
-                </p>
-        {% endfor %}
-        {% for object in objects %}
-                <div style="position: fixed;
-                top: 50%;
-                right: 50%;" class="{{object.container_type}}">
-                    <form action="/loot" method="get">
-                        <b>{{ object.container_type }}</b>
-                        <div>
-                        <label for="actions"></label>
-
-                        </select>
-                        <input type="hidden" name="container_id" value="{{ object.id }}"/>
-                        </div>
-                        <div>
-                        <input type="submit" value="Loot"/>
-                        </div>
-                    </form>
-                    
+                </select>
+                <input type="hidden" name="container_id" value="{{ object.id }}"/>
                 </div>
-        {% endfor %}
-    </body>
-</html>
+                <div>
+                <input type="submit" value="Loot"/>
+                </div>
+            </form>
+            
+        </div>
+{% endfor %}
+{%endblock%}
