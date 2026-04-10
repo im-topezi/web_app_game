@@ -14,9 +14,9 @@ Goals for the project:
     - [ ] Players have attributes
     - [ ] Players get attributes from items
 - [ ] Player home page with stats about the player
-- [ ] World system
-    - [ ] Players can move in the world
-    - [ ] Worlds are automaticly generated
+- [x] World system
+    - [x] Players can move in the world
+    - [x] Worlds are automaticly generated
         - [ ] NPC's are generated from certain parameters
         - [ ] Items are generated from certain parameters
 - [ ] Players can interact with NPC's

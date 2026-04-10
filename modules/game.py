@@ -63,19 +63,7 @@ def tile_details(tile_id):
     return tile
 
 
-def get_player_items(username):
-    sql="""
-    SELECT * 
-    FROM items 
-    WHERE player=(SELECT id 
-    FROM users 
-    WHERE username=?) 
-    AND listed_for_sale!=TRUE
-    """
-    print(username)
-    items=db.query(sql,[username])
-    print(items)
-    return items
+
 
 def get_container_items(container_id):
     sql="""
@@ -97,30 +85,12 @@ def take_item(item_id,player):
     result=db.execute(sql,[player,item_id])
     return result
 
-def drop_item(item_id,player):
-    sql="""
-    DELETE FROM items 
-    WHERE player=(SELECT id 
-    FROM users 
-    WHERE username=?) 
-    AND id=?
-    """
-    result=db.execute(sql,[player,item_id])
-    if result==1:
-        return "Item dropped"
 
 
 def generate_container_placement():
     pass
 
-def get_user_worlds(username):
-    sql="""
-    SELECT *
-    FROM worlds
-    WHERE player=(SELECT id
-    FROM users WHERE username=?)
-    """
-    return db.query(sql,[username])
+
 
 def visit_world(world_id,username):
     visit_sql="""

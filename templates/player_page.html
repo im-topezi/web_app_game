@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
+        
+{% block content %}
+
+<a href="/">&lt;&lt;</a>
+
+Stats:
+{% for value in info %}
+Player gold:{{value.gold}}
+{%endfor%}
+
+Inventory:
+{% for item in items %}
+{{item.item_name}}
+{%endfor%}
+
+{%endblock%}

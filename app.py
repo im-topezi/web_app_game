@@ -6,6 +6,7 @@ from functools import wraps
 import modules.game as game
 import modules.marketplace as marketplace
 import modules.world_generation as world
+import modules.player as player
 import secrets
 
 
@@ -35,7 +36,9 @@ def check_csrf():
     if request.form["csrf_token"] != session["csrf_token"]:
         abort(403)
 
-
+def set_gold():
+    gold=marketplace.get_gold_amount(session["username"])
+    session["gold"]=gold
 
 
 @app.route("/")
@@ -43,20 +46,11 @@ def check_csrf():
 def index():
     worlds=[]
     if session.get("username"):
-        worlds=game.get_user_worlds(session["username"])
+        set_gold()
+        worlds=player.get_user_worlds(session["username"])
     return render_template("index.html",worlds=worlds)
 
-@app.route("/new_world",methods=["POST"])
-@login_required
-@cant_be_in_game
-def generate_new_world():
-    check_csrf()
-    if request.form["world_name"]:
-        world.World(16,session["username"],request.form["world_name"]).generate_world()
-        flash("New world generated!")
-    else:
-        flash("World needs a name!")
-    return redirect("/")
+
 
 @app.route("/login",methods=["POST","GET"])
 def login_page():
@@ -70,6 +64,7 @@ def login_page():
         if login.login_succesfully(username,password):
             session["username"]=username
             session["csrf_token"] = secrets.token_hex(16)
+            set_gold()
             flash(f"Succesfully logged in as {username}")
             return redirect("/")
         else:
@@ -94,42 +89,15 @@ def register():
 
 @app.route("/logout")
 def logout():
-    del session["csrf_token"]
-    del session["username"]
-    if session.get("location"):
-        del session["location"]
+    session.clear()
     return redirect("/")
-
-
-@app.route("/play", methods=["POST","GET"])
-@login_required
-def play():
-    if request.method=="GET":
-        if session.get("location"):
-            print(session["location"])
-            tile=game.tile_details(session["location"])
-            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"],tile_type=tile["tile_type"])
-        else:
-            flash("You're not on an adventure, choose a world to play!")
-            return redirect("/")
-
-    elif request.method=="POST":
-        world_id=request.form["world_id"]
-        location=game.visit_world(world_id,session["username"])
-        if location:
-            session["location"]=location[0]["tile"]
-            
-            return redirect("/play")
-        else:
-            flash("World is not available")
-            return redirect("/")
-
 
 
 @app.route("/inventory")
 @login_required
 def inventory():
-    items=game.get_player_items(session["username"])
+    set_gold()
+    items=player.get_player_items(session["username"])
     return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer else "")
 
 
@@ -148,7 +116,7 @@ def loot():
         result=game.take_item(item_id,session["username"])
         if result==1:
             flash(f"{request.form["item_name"]} has been added to your inventory")
-        items=game.get_container_items(container_id)
+        set_gold()
         return redirect(request.referrer)
     
 
@@ -166,6 +134,7 @@ def drop():
 @login_required
 @cant_be_in_game
 def use_marketplace():
+    set_gold()
     query=request.args.get("query")
     items=marketplace.get_listed_items(query)
     return render_template("marketplace.html",items=items)
@@ -176,6 +145,7 @@ def use_marketplace():
 @cant_be_in_game
 def sell():
     if request.method=="GET":
+        set_gold()
         item_id=request.args.get("item_id")
         item=marketplace.check_item_owner(item_id,session["username"])
         if item:
@@ -223,6 +193,42 @@ def cancel():
     flash(result)
     return redirect("/marketplace")
 
+@app.route("/new_world",methods=["POST"])
+@login_required
+@cant_be_in_game
+def generate_new_world():
+    check_csrf()
+    if request.form["world_name"]:
+        world.World(16,session["username"],request.form["world_name"]).generate_world()
+        flash("New world generated!")
+    else:
+        flash("World needs a name!")
+    return redirect("/")
+
+@app.route("/play", methods=["POST","GET"])
+@login_required
+def play():
+    if request.method=="GET":
+        set_gold()
+        if session.get("location"):
+            print(session["location"])
+            tile=game.tile_details(session["location"])
+            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"],tile_type=tile["tile_type"])
+        else:
+            flash("You're not on an adventure, choose a world to play!")
+            return redirect("/")
+
+    elif request.method=="POST":
+        world_id=request.form["world_id"]
+        location=game.visit_world(world_id,session["username"])
+        if location:
+            session["location"]=location[0]["tile"]
+            
+            return redirect("/play")
+        else:
+            flash("World is not available")
+            return redirect("/")
+
 @app.route("/move",methods=["POST"])
 @login_required
 def move():
@@ -244,3 +250,12 @@ def leave():
     if updated==1:
         del session["location"]
     return redirect("/")
+
+@app.route("/player/<username>",methods=["GET","POST"])
+def player_page(username):
+    info=player.get_player_info(username)
+    items=player.get_player_items(username)
+    if info:
+        return render_template("player_page.html",items=items,info=info)
+    else:
+        abort(404)

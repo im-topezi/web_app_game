@@ -105,3 +105,12 @@ def cancel_listing(item_id,username):
     else:
         print(result)
         return "Error"
+    
+def get_gold_amount(username):
+    sql="""
+    SELECT gold
+    FROM users
+    WHERE username=?
+    """
+    gold=db.query(sql,[username])[0]["gold"]
+    return gold

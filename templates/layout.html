@@ -28,6 +28,7 @@
         {% if session.username %}
         <ul><a href="/logout"><button>Logout</button></a></ul>
         <ul><a href="/inventory"><button>Inventory</button></a></ul>
+        <b><i>Gold</i> {{session.gold}}</b>
         {% else %}
         <ul><a href="/login"><button>Login</button></a></ul>
         <ul><a href="/register"><button>Register</button></a></ul>

@@ -81,6 +81,31 @@ FOREIGN KEY (player) REFERENCES users(id),
 FOREIGN KEY (tile) REFERENCES tiles(id)
 );
 
+CREATE TABLE stat_sheet (
+id INTEGER PRIMARY KEY,
+stamina INTEGER,
+strength INTEGER,
+agility INTEGER,
+magic INTEGER,
+player_id INTEGER UNIQUE,
+npc_id INTEGER UNIQUE,
+item_id INTEGER UNIQUE,
+FOREIGN KEY (player_id) REFERENCES users(id),
+FOREIGN KEY (npc_id) REFERENCES npcs(id),
+FOREIGN KEY (item_id) REFERENCES items(id),
+CHECK (
+    player_id IS NULL
+    OR player_id IS NOT NULL AND (npc_id IS NULL AND item_id IS NULL)
+),
+CHECK (
+    npc_id IS NULL
+    OR npc_id IS NOT NULL AND (player_id IS NULL AND item_id IS NULL)
+),
+CHECK (
+    item_id IS NULL
+    OR item_id IS NOT NULL AND (player_id IS NULL AND npc_id IS NULL)
+)
+);
 
 
 
