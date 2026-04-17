@@ -10,7 +10,11 @@
 <a href="/">&lt;&lt;</a>
 {%endif%}
 
-
+{%if not items%}
+<div>
+    You don't have any items
+</div>
+{%endif%}
 
 {% for item in items %}
         <div>
@@ -20,10 +24,12 @@
                 <input type="hidden" name="item_id" value="{{item.id}}"/>
                 <input type="submit" value="drop" onclick="return confirm('You will lose this item forever, are you sure?')" />
             </form>
+            {%if not session.location%}
             <form action="/sell" method="get">
                 <input type="hidden" name="item_id" value="{{item.id}}"/>
                 <input type="submit" value="sell"/>
             </form>
+            {%endif%}
         </div>
 {% endfor %}
 {% endblock %}

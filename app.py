@@ -36,9 +36,12 @@ def check_csrf():
     if request.form["csrf_token"] != session["csrf_token"]:
         abort(403)
 
-def set_gold():
-    gold=marketplace.get_gold_amount(session["username"])
-    session["gold"]=gold
+@app.after_request
+def set_gold_amount(response):
+    if session.get("username"):
+        gold=marketplace.get_gold_amount(session["username"])
+        session["gold"]=gold
+    return response
 
 
 @app.route("/")
@@ -46,7 +49,6 @@ def set_gold():
 def index():
     worlds=[]
     if session.get("username"):
-        set_gold()
         worlds=player.get_user_worlds(session["username"])
     return render_template("index.html",worlds=worlds)
 
@@ -64,7 +66,6 @@ def login_page():
         if login.login_succesfully(username,password):
             session["username"]=username
             session["csrf_token"] = secrets.token_hex(16)
-            set_gold()
             flash(f"Succesfully logged in as {username}")
             return redirect("/")
         else:
@@ -96,7 +97,6 @@ def logout():
 @app.route("/inventory")
 @login_required
 def inventory():
-    set_gold()
     items=player.get_player_items(session["username"])
     return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer else "")
 
@@ -114,9 +114,8 @@ def loot():
         item_id=request.form["item_id"]
         container_id=request.form["container_id"]
         result=game.take_item(item_id,session["username"])
-        if result==1:
-            flash(f"{request.form["item_name"]} has been added to your inventory")
-        set_gold()
+        if result["rows_affected"]==1:
+            flash(f"{request.form['item_name']} has been added to your inventory")
         return redirect(request.referrer)
     
 
@@ -125,7 +124,7 @@ def loot():
 def drop():
         check_csrf()
         item_id=request.form["item_id"]
-        message=game.drop_item(item_id,session["username"])
+        message=player.drop_item(item_id,session["username"])
         flash(message)
         return redirect("/inventory")
 
@@ -134,9 +133,12 @@ def drop():
 @login_required
 @cant_be_in_game
 def use_marketplace():
-    set_gold()
     query=request.args.get("query")
     items=marketplace.get_listed_items(query)
+    for item in items:
+        print(item)
+        for value in item:
+            print(value)
     return render_template("marketplace.html",items=items)
 
 
@@ -145,9 +147,9 @@ def use_marketplace():
 @cant_be_in_game
 def sell():
     if request.method=="GET":
-        set_gold()
         item_id=request.args.get("item_id")
         item=marketplace.check_item_owner(item_id,session["username"])
+        #MAKE ANOTHER CHECK HERE
         if item:
             return render_template("sell.html",item=item[0])
         else:
@@ -160,12 +162,14 @@ def sell():
             flash("Price has to be more than 0")
             return redirect("/inventory")
         item=marketplace.check_item_owner(item_id,session["username"])
+        #MAKE ANOTHER CHECK HERE
         if item:
             result=marketplace.put_item_for_sale(item_id,market_price)
-            if result==1:
-                flash(f"{item[0]["item_name"]} has been listed to the marketplace")
+            if result["rows_affected"]==1:
+                flash(f"{item[0]['item_name']} has been listed to the marketplace")
             else:
-                flash(result)
+                flash("error")
+                print(result["error"])
             return redirect("/inventory")
         else:
             abort(403)
@@ -193,6 +197,46 @@ def cancel():
     flash(result)
     return redirect("/marketplace")
 
+
+@app.route("/offer_trade", methods=["POST","GET"])
+@login_required
+@cant_be_in_game
+def trade():
+    if request.method=="GET":
+        item_id=request.args.get("item_id")
+        item=marketplace.get_item_details(item_id)
+        #ADD A CHECK HERE
+        if item:
+            offers=marketplace.get_offers_for_item(item_id)
+            items=player.get_player_items(session["username"])
+            return render_template("trade_offer.html",items=items,item=item[0],offers=offers)
+
+    if request.method=="POST":
+        check_csrf()
+        items_to_offer=request.form.getlist("item_offer")
+        item_id=request.form["item_id"]
+        gold_offer=request.form["gold_offer"]
+        try:
+            gold_offer=int(gold_offer)
+        except ValueError:
+            gold_offer=0
+        if gold_offer < 0:
+            flash("Gold offer can't be negative")
+            return redirect(request.referrer)
+        result=marketplace.create_trade_offer(item_id,items_to_offer,session["username"],gold_offer)
+        flash(result)
+        return redirect(request.referrer)
+
+@app.route("/my_offers")
+@login_required
+@cant_be_in_game
+def my_offers():
+    username=session["username"]
+    my_offers=marketplace.get_my_offers(username)
+    other_offers=marketplace.get_offers_for_me(username)
+    return render_template("my_offers.html",my_offers=my_offers,other_offers=other_offers,previous_page=request.referrer if request.referrer else "")
+
+
 @app.route("/new_world",methods=["POST"])
 @login_required
 @cant_be_in_game
@@ -205,15 +249,16 @@ def generate_new_world():
         flash("World needs a name!")
     return redirect("/")
 
+
 @app.route("/play", methods=["POST","GET"])
 @login_required
 def play():
     if request.method=="GET":
-        set_gold()
+        
         if session.get("location"):
             print(session["location"])
             tile=game.tile_details(session["location"])
-            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],objects=tile["objects"],tile_type=tile["tile_type"])
+            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],containers=tile["containers"],tile_type=tile["tile_type"])
         else:
             flash("You're not on an adventure, choose a world to play!")
             return redirect("/")
@@ -223,11 +268,11 @@ def play():
         location=game.visit_world(world_id,session["username"])
         if location:
             session["location"]=location[0]["tile"]
-            
             return redirect("/play")
         else:
             flash("World is not available")
             return redirect("/")
+
 
 @app.route("/move",methods=["POST"])
 @login_required
@@ -236,8 +281,8 @@ def move():
     target_tile=request.form["tile"]
     current_tile=session["location"]
     if game.move(target_tile,current_tile):
-        updated=game.update_location(current_tile,target_tile,session["username"])
-        if updated==1:
+        result=game.update_location(current_tile,target_tile,session["username"])
+        if result["rows_affected"]==1:
             session["location"]=target_tile
     return redirect("/play")
 
@@ -246,8 +291,8 @@ def move():
 @login_required
 def leave():
     check_csrf()
-    updated=game.update_location(session["location"],None,session["username"])
-    if updated==1:
+    result=game.update_location(session["location"],None,session["username"])
+    if result["rows_affected"]==1:
         del session["location"]
     return redirect("/")
 
@@ -259,3 +304,6 @@ def player_page(username):
         return render_template("player_page.html",items=items,info=info)
     else:
         abort(404)
+
+
+    

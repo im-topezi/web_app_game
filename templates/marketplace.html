@@ -30,6 +30,14 @@
                     <input type="submit" value="cancel" onclick="return confirm('Cancel the listing for {{item.item_name}} ?')" />
                 </form>
             {%endif%}
+            <form action="/offer_trade" method="get">
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                {%if item.username!=session.username%}
+                <input type="submit" value="Offer a trade"/>
+                {%else%}
+                <input type="submit" value="See offers"/>
+                {%endif%}
+            </form>
             <div>Attributes:</div>
             <div>Price: {{item.marketplace_price}}</div>
         </p>

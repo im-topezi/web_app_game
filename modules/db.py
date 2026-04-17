@@ -9,9 +9,13 @@ def get_connection():
 
 def execute(sql, parameters=[]):
     connection = get_connection()
+    results={"rows":[],
+             "rows_affected":0,
+             "error":None}
     try:
         if type(sql)==str:
-            connection.execute(sql, parameters)
+            results["rows"]=[connection.execute(sql, parameters).fetchall()]
+            
 
         elif type(sql)==list:
             
@@ -21,14 +25,15 @@ def execute(sql, parameters=[]):
             
             for statement,parameter in zip(sql,parameters):
                 print(statement,parameter)
-                cursor.execute(statement,parameter)
-                
+                results["rows"].append(cursor.execute(statement,parameter).fetchall())
+
         connection.commit()
-        rows_affected=connection.total_changes
-        return rows_affected
+        results["rows_affected"]=connection.total_changes
+        return results
             
     except sqlite3.Error as error:
-        return error
+        results["error"]=error
+        return results
     finally:
         connection.close()
 

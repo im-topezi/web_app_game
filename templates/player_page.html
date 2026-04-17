@@ -6,14 +6,126 @@
 
 <a href="/">&lt;&lt;</a>
 
-Stats:
+
+
 {% for value in info %}
-Player gold:{{value.gold}}
+<h2>{{value.username}}</h2>
+<ul>{{value.username}}'s gold: {{value.gold}}</ul>
+{%if value.username==session.username and not value.set_stats%}
+<form action="/set_stats" method="post">
+
+    <ul><i>You have {{15-value.total_stats}} unspent skillpoints</i></ul>
+<table>
+    <tr>
+        <th>Stat</th>
+        <th>Value</th>
+    </tr>
+    <tr>
+        <td>
+            <div class="tooltip">Stamina
+                 <span class="tooltiptext">
+                    Stamina increases your total health
+                 </span>
+            </div>
+        </td>
+        <td><input type="number" name="stamina" placeholder="{{value.stamina}}" min="{{value.stamina}}" max="{{15-value.total_stats}}"/></td>
+    </tr>
+        <tr>
+        <td>
+            <div class="tooltip">Strength
+                 <span class="tooltiptext">
+                    Strength affects your ability to pierce armor with melee weapons. It is also required to wield heavy weapons effectivly.
+                 </span>
+            </div>
+        </td>
+        <td><input type="number" name="strength" placeholder="{{value.strength}}" min="{{value.strength}}" max="{{15-value.total_stats}}"/></td>
+    </tr>
+        <tr>
+            <td>
+                <div class="tooltip">Agility
+                    <span class="tooltiptext">
+                        Agility affects your effectivness with light melee weapons and also your ability to dodge attacks.
+                    </span>
+                </div>
+            </td>
+        <td><input type="number" name="Agility" placeholder="{{value.Agility}}" min="{{value.Agility}}" max="{{15-value.total_stats}}"/></td>
+    </tr>
+        <tr>
+        <td>
+            <div class="tooltip">Magic
+                 <span class="tooltiptext">
+                    Magic determines your ability with magical weapons and items.
+                 </span>
+            </div>
+        </td>
+        <td><input type="number" name="magic" placeholder="{{value.magic}}" min="{{value.magic}}" max="{{15-value.total_stats}}"/></td>
+    </tr>
+</table>
+<input type="submit" value="Confirm choices" onclick="return confirm('Are you sure you want to set these skillpoints? Changing them can be difficult.')"/>
+</form>
+{%else%}
+
+<table>
+    <tr>
+        <th>Stat</th>
+        <th>Value</th>
+    </tr>
+    <tr>
+        <td>
+            <div class="tooltip">Stamina
+                 <span class="tooltiptext">
+                    Stamina increases your total health
+                 </span>
+            </div>
+        </td>
+        <td>{{value.stamina}}</td>
+    </tr>
+        <tr>
+        <td>
+            <div class="tooltip">Strength
+                 <span class="tooltiptext">
+                    Strength affects your ability to pierce armor with melee weapons. It is also required to wield heavy weapons effectivly.
+                 </span>
+            </div>
+        </td>
+        <td>{{value.strength}}</td>
+    </tr>
+        <tr>
+            <td>
+                <div class="tooltip">Agility
+                    <span class="tooltiptext">
+                        Agility affects your effectivness with light melee weapons and also your ability to dodge attacks.
+                    </span>
+                </div>
+            </td>
+        <td>{{value.Agility}}</td>
+    </tr>
+        <tr>
+        <td>
+            <div class="tooltip">Magic
+                 <span class="tooltiptext">
+                    Magic determines your ability with magical weapons and items.
+                 </span>
+            </div>
+        </td>
+        <td>{{value.magic}}</td>
+    </tr>
+</table>
+{%endif%}
 {%endfor%}
 
-Inventory:
-{% for item in items %}
-{{item.item_name}}
-{%endfor%}
+<h2>Inventory:</h2> 
+
+<table>
+    <tr>
+        <th>Item name</th>
+    </tr>
+    {% for item in items %}
+    <tr>
+        <td>{{item.item_name}}</td>
+    </tr>
+    {%endfor%}
+</table>
+
 
 {%endblock%}

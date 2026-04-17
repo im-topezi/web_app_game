@@ -47,17 +47,17 @@
             <b>{{ npc.npc_name }}</b>
         </p>
 {% endfor %}
-{% for object in objects %}
+{% for container in containers %}
         <div style="position: fixed;
         top: 50%;
-        right: 50%;" class="{{object.container_type}}">
+        right: 50%;" class="{{container.container_type}}">
             <form action="/loot" method="get">
-                <b>{{ object.container_type }}</b>
+                <b>{{ container.container_type }}</b>
                 <div>
                 <label for="actions"></label>
 
                 </select>
-                <input type="hidden" name="container_id" value="{{ object.id }}"/>
+                <input type="hidden" name="container_id" value="{{ container.id }}"/>
                 </div>
                 <div>
                 <input type="submit" value="Loot"/>

@@ -9,11 +9,17 @@ def create_new_user(username,password1,password2):
     sql="""
     INSERT INTO users (username, password_hash) 
     VALUES (?,?)
+    RETURNING *
     """
     result=db.execute(sql,[username,password_hash])
-    if type(result) is sqlite3.IntegrityError:
+    if type(result["error"]) is sqlite3.IntegrityError:
         return "Username must be unique"
-    if result==1:
+    if result["rows_affected"]==1:
+        sql_assign_stat_sheet="""
+        INSERT INTO stat_sheet (player_id)
+        VALUES (?)
+        """
+        db.execute(sql_assign_stat_sheet,[result["rows"][0][0]["id"]])
         return "User created succesfully"
     else:
         return "Database error"

@@ -12,7 +12,7 @@
             <form action="/sell" method="post">
                 {{item.item_name}}
                 <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                <input type="number" name="market_price" placeholder="Price"/>
+                <input type="number" min="0" name="market_price" placeholder="Price"/>
                 <input type="hidden" name="item_id" value="{{item.id}}"/>
                 <input type="submit" value="sell"/>
             </form>

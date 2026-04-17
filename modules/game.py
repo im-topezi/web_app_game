@@ -49,16 +49,15 @@ def tile_details(tile_id):
     sql_npc="""
     SELECT * 
     FROM npcs 
-    WHERE x_coordinate=? 
-    AND y_coordinate=?
+    WHERE tile=?
     """
     sql_container="""
     SELECT * 
     FROM containers 
-    WHERE x_coordinate=? 
-    AND y_coordinate=?"""
-    #npcs=db.query(sql_npc,[x,y])
-    #containers=db.query(sql_container,[x,y])
+    WHERE tile=?
+    """
+    tile["npcs"]=db.query(sql_npc,[tile_id])
+    tile["containers"]=db.query(sql_container,[tile_id])
 
     return tile
 
@@ -83,7 +82,7 @@ def take_item(item_id,player):
     WHERE id=?
     """
     result=db.execute(sql,[player,item_id])
-    return result
+    return result["rows_affected"]
 
 
 

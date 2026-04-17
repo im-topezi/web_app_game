@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
+        
+{% block content %}
+
+<a href="/marketplace">&lt;&lt;</a>
+
+<h2>{{item.item_name}}</h2>
+{%if item.username!=session.username%}
+        <p>     
+            <form action="/offer_trade" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                <h2>
+                    Compose a trade offer:
+                </h2>
+                <input type="number" name="gold_offer" min="0" max="{{session.gold}}" placeholder="Gold"/>
+                {%if not items%}
+                <div>
+                    You don't have any items
+                </div>
+                {%endif%}
+                {%for user_item in items%}
+                <ul>
+                    {{user_item.item_name}}
+                    <input type="checkbox" name="item_offer" value="{{user_item.id}}"/>
+                </ul>
+                {%endfor%}
+                <input type="submit" value="Send offer"/>
+            </form>
+        </p>
+{%endif%}
+
+<h2>
+    Offers for this item
+</h2>
+{%if offers%}
+<table>
+  <tr>
+    <th>Gold</th>
+    <th>Items</th>
+    <th>User</th>
+  </tr>
+  <tr>
+{% for offer in offers %}
+        
+            
+    
+    <td>
+        {%if offer.gold_offer>0%}
+        {{offer.gold_offer}}
+        {%else%}
+        <p>No gold</p>
+        {%endif%}
+    </td>
+    <td>
+    {%for item in offer.offered_items%}
+    
+    <ul>
+        {{item.item_name}}
+    </ul>
+    {%endfor%}
+    </td>
+    <td>
+        {{offer.buyer_name}}
+    </td>
+
+{% endfor %}
+
+    </tr>
+</table>
+{%else%}
+<ul>No offers for this item</ul>
+{%endif%}
+{% endblock %}

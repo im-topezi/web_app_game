@@ -1,3 +1,47 @@
+*{
+  font-family: 'EB Garamond';
+  font-size: 23px;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+  cursor: pointer;
+}
+
+.tooltiptext {
+  visibility: hidden;
+  width: 130px;
+  background-color: goldenrod;
+  color: #000000;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: -5px;
+  left: 105%;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+h2{
+  font-size: 30px;
+}
+table {
+  border-collapse: collapse;
+  width: 70%;
+}
+
+td, th {
+  border: 1px solid #000000;
+  text-align: left;
+  padding: 8px;
+}
+
 div.nav {
   position: fixed;
   top: 0;
