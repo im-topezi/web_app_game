@@ -199,8 +199,7 @@ FOREIGN KEY (damage_style) REFERENCES damage_styles(id)
 
 
 
-INSERT INTO items (item_name,player,container) VALUES ("Rusty sword",NULL,(SELECT containers.id FROM containers WHERE container_type="barrel"));
-INSERT INTO items (item_name,player,container) VALUES ("Super sword",NULL,(SELECT containers.id FROM containers WHERE container_type="barrel"));
+
 
 
 INSERT INTO tile_types(type_name,difficulty) VALUES ("City",0);
@@ -235,3 +234,14 @@ INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Mace",(SE
 INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Sword",(SELECT id FROM item_categories WHERE category_name="Weapon"));
 INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"));
 INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+
+
+INSERT INTO users (username,gold) VALUES ("Test user",1000);
+INSERT INTO users (username,gold) VALUES ("Test user2",1000);
+INSERT INTO items (item_name,player) VALUES ("Rusty sword",1);
+INSERT INTO items (item_name,player) VALUES ("Super sword",2);
+INSERT INTO marketplace_listings (item_id,seller_id,marketplace_price) VALUES (1,1,100);
+INSERT INTO trade_offers (sold_item,buyer_id,gold_offer) VALUES (1,2,40);
+INSERT INTO offered_items (offer_id,item_id) VALUES (1,2);
+
+
