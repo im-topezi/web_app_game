@@ -38,14 +38,14 @@ UNIQUE (world_id,x_coordinate,y_coordinate)
 CREATE TABLE damage_types (
     id INTEGER PRIMARY KEY,
     damage_type TEXT
-)
+);
 
 CREATE TABLE damage_styles (
     id INTEGER PRIMARY KEY,
     type_id INTEGER,
     style TEXT,
     FOREIGN KEY (type_id) REFERENCES damage_types(id)
-)
+);
 
 CREATE TABLE paths (
 id INTEGER PRIMARY KEY,
@@ -194,7 +194,7 @@ max_base_damage INTEGER,
 base_speed INTEGER,
 FOREIGN KEY (item_id) REFERENCES items(id),
 FOREIGN KEY (damage_style) REFERENCES damage_styles(id)
-)
+);
 
 
 
@@ -210,16 +210,16 @@ INSERT INTO tile_types(type_name,difficulty) VALUES ("Forest",5);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Village",0);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Mountain",25);
 
-INSERT INTO damage_types_types(damage_type) VALUES ("Magic")
-INSERT INTO damage_types_types(damage_type) VALUES ("Physical")
+INSERT INTO damage_types(damage_type) VALUES ("Magic");
+INSERT INTO damage_types(damage_type) VALUES ("Physical");
 
-INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Frost")
-INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Fire")
-INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Shock")
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Frost");
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Fire");
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Shock");
 
-INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Stab")
-INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Crush")
-INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Slash")
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Stab");
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Crush");
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Slash");
 
 
 INSERT INTO item_categories(category_name) VALUES ("Consumable");
