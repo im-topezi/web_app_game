@@ -3,7 +3,12 @@
 {% block title %}Welcome to game{% endblock %}
         
 {% block content %}
+<p>
+    <b>{{ tile_type }}</b>
+</p>
 {%if connected.north %}
+
+
 <div class="north">
     <form action="/move" method="post">
         <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />

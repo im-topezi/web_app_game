@@ -3,8 +3,10 @@ id INTEGER PRIMARY KEY,
 username TEXT UNIQUE,
 password_hash TEXT,
 set_stats BOOLEAN DEFAULT FALSE,
+health INTEGER DEFAULT 100,
 gold INTEGER DEFAULT 0 NOT NULL,
-CHECK (gold >= 0));
+CHECK (gold >= 0),
+CHECK (health >= 0));
 
 
 CREATE TABLE worlds (
@@ -33,6 +35,17 @@ FOREIGN KEY (tile_type) REFERENCES tile_types(type_name)
 UNIQUE (world_id,x_coordinate,y_coordinate)
 );
 
+CREATE TABLE damage_types (
+    id INTEGER PRIMARY KEY,
+    damage_type TEXT
+)
+
+CREATE TABLE damage_styles (
+    id INTEGER PRIMARY KEY,
+    type_id INTEGER,
+    style TEXT,
+    FOREIGN KEY (type_id) REFERENCES damage_types(id)
+)
 
 CREATE TABLE paths (
 id INTEGER PRIMARY KEY,
@@ -139,6 +152,7 @@ stamina INTEGER DEFAULT 0,
 strength INTEGER DEFAULT 0,
 agility INTEGER DEFAULT 0,
 magic INTEGER DEFAULT 0,
+armor INTEGER DEFAULT 0,
 player_id INTEGER UNIQUE,
 npc_id INTEGER UNIQUE,
 item_id INTEGER UNIQUE,
@@ -148,7 +162,7 @@ FOREIGN KEY (item_id) REFERENCES items(id),
 
 CHECK (
     player_id IS NULL
-    OR player_id IS NOT NULL AND (npc_id IS NULL AND item_id IS NULL) AND ((stamina+strength+agility+magic)<16)
+    OR player_id IS NOT NULL AND (npc_id IS NULL AND item_id IS NULL) AND ((stamina+strength+agility+magic)<16) AND (armor=0)
 ),
 CHECK (
     npc_id IS NULL
@@ -160,6 +174,7 @@ CHECK (
 )
 );
 
+
 CREATE TABLE item_details (
 item_id INTEGER UNIQUE,
 item_type INTEGER,
@@ -170,6 +185,16 @@ FOREIGN KEY (item_type) REFERENCES item_subcategories(id),
 FOREIGN KEY (slot) REFERENCES item_slot(id)
 );
 
+
+CREATE TABLE weapon_details (
+item_id INTEGER UNIQUE,
+damage_style INTEGER,
+min_base_damage INTEGER,
+max_base_damage INTEGER,
+base_speed INTEGER,
+FOREIGN KEY (item_id) REFERENCES items(id),
+FOREIGN KEY (damage_style) REFERENCES damage_styles(id)
+)
 
 
 
@@ -185,10 +210,28 @@ INSERT INTO tile_types(type_name,difficulty) VALUES ("Forest",5);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Village",0);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Mountain",25);
 
+INSERT INTO damage_types_types(damage_type) VALUES ("Magic")
+INSERT INTO damage_types_types(damage_type) VALUES ("Physical")
+
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Frost")
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Fire")
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Magic"),"Shock")
+
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Stab")
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Crush")
+INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WHERE damage_type="Physical"),"Slash")
+
 
 INSERT INTO item_categories(category_name) VALUES ("Consumable");
 INSERT INTO item_categories(category_name) VALUES ("Weapon");
 INSERT INTO item_categories(category_name) VALUES ("Armor");
-INSERT INTO item_subcategories(subcatergory_name) VALUES ("Shoulder");
-INSERT INTO item_subcategories(subcatergory_name) VALUES ("Consumable");
-INSERT INTO item_subcategories(subcatergory_name) VALUES ("Consumable");
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Metal Armor",(SELECT id FROM item_categories WHERE category_name="Armor"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Leather Armor",(SELECT id FROM item_categories WHERE category_name="Armor"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Cloth Armor",(SELECT id FROM item_categories WHERE category_name="Armor"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Health Potion",(SELECT id FROM item_categories WHERE category_name="Consumable"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Dagger",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Axe",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Mace",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Sword",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"));

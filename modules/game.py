@@ -56,9 +56,16 @@ def tile_details(tile_id):
     FROM containers 
     WHERE tile=?
     """
+
+    sql_type="""
+    SELECT tile_type
+    FROM tiles
+    WHERE id=?
+    """
+
     tile["npcs"]=db.query(sql_npc,[tile_id])
     tile["containers"]=db.query(sql_container,[tile_id])
-
+    tile["tile_type"]=db.query(sql_type,[tile_id])[0]["tile_type"]
     return tile
 
 
