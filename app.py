@@ -197,6 +197,16 @@ def cancel():
     flash(result)
     return redirect("/marketplace")
 
+@app.route("/cancel_offer",methods=["POST"])
+@login_required
+@cant_be_in_game
+def cancel_offer():
+    check_csrf()
+    offer_id=request.form["offer_id"]
+    result=marketplace.cancel_offer(offer_id,session["username"])
+    flash(result)
+    return redirect("/my_offers")
+
 
 @app.route("/offer_trade", methods=["POST","GET"])
 @login_required
@@ -234,7 +244,19 @@ def my_offers():
     username=session["username"]
     my_offers=marketplace.get_my_offers(username)
     other_offers=marketplace.get_offers_for_me(username)
-    return render_template("my_offers.html",my_offers=my_offers,other_offers=other_offers,previous_page=request.referrer if request.referrer else "")
+    return render_template("my_offers.html",my_offers=my_offers,other_offers=other_offers)
+
+@app.route("/accept", methods=["POST"])
+@login_required
+@cant_be_in_game
+def accept_trade_offer():
+    check_csrf()
+    buyer_id=request.form["buyer_id"]
+    sold_item_id=request.form["sold_item_id"]
+    offer_id=request.form["offer_id"]
+    result=marketplace.accept_offer(offer_id,session["username"],buyer_id,sold_item_id)
+    flash(result)
+    return redirect("/my_offers")
 
 
 @app.route("/new_world",methods=["POST"])
@@ -274,6 +296,7 @@ def play():
             return redirect("/")
 
 
+
 @app.route("/move",methods=["POST"])
 @login_required
 def move():
@@ -306,4 +329,21 @@ def player_page(username):
         abort(404)
 
 
+@app.route("/set_stats",methods=["POST"])
+@login_required
+@cant_be_in_game
+def set_stats():
+    #check_csrf()
     
+    agility=int(request.form["agility"])
+    strength=int(request.form["strength"])
+    stamina=int(request.form["stamina"])
+    magic=int(request.form["magic"])
+    stats=(agility+strength+stamina+magic)
+    print(stats)
+    if stats>15:
+        flash("Stats can't exceed total of 15")
+        return redirect(request.referrer)
+    result=player.set_stats(session["username"],agility,magic,stamina,strength,stats)
+    flash(result)
+    return redirect(request.referrer)

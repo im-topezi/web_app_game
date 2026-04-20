@@ -78,7 +78,7 @@ def take_item(item_id,player):
     UPDATE items 
     SET player=(SELECT id 
     FROM users 
-    WHERE username=?), item_owner=NULL,container=NULL  
+    WHERE username=?), npc=NULL,container=NULL  
     WHERE id=?
     """
     result=db.execute(sql,[player,item_id])

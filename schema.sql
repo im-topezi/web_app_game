@@ -56,16 +56,34 @@ tile INTEGER,
 FOREIGN KEY (tile) REFERENCES tiles(id)
 );
 
+CREATE TABLE item_categories (
+    id INTEGER PRIMARY KEY,
+    category_name TEXT
+);
+
+CREATE TABLE item_slots (
+id INTEGER PRIMARY KEY,
+slot TEXT
+);
+
+CREATE TABLE item_subcategories (
+id INTEGER PRIMARY KEY,
+category_id INTEGER,
+subcatergory_name TEXT,
+FOREIGN KEY (category_id) REFERENCES item_categories(id)
+);
+
+
+
 CREATE TABLE items (
 id INTEGER PRIMARY KEY,
 item_name TEXT,
 npc INTEGER,
 player INTEGER,
 container INTEGER,
-trader_price INTEGER,
 FOREIGN KEY (npc) REFERENCES npcs(id),
 FOREIGN KEY (player) REFERENCES users(id),
-FOREIGN KEY (container) REFERENCES containers(id)
+FOREIGN KEY (container) REFERENCES containers(id),
 CHECK (
     player IS NULL
     OR player IS NOT NULL AND (npc IS NULL AND container IS NULL)
@@ -86,16 +104,16 @@ id INTEGER PRIMARY KEY,
 sold_item INTEGER NOT NULL,
 buyer_id INTEGER NOT NULL,
 gold_offer INTEGER,
-FOREIGN KEY (sold_item) REFERENCES items(id),
+FOREIGN KEY (sold_item) REFERENCES items(id) ON DELETE CASCADE,
 FOREIGN KEY (buyer_id) REFERENCES users(id)
 );
 
 CREATE TABLE offered_items (
 id INTEGER PRIMARY KEY,
 offer_id INTEGER NOT NULL,
-item_id INTEGER NOT NULL,
+item_id INTEGER NOT NULL UNIQUE,
 FOREIGN KEY (item_id) REFERENCES items(id),
-FOREIGN KEY (offer_id) REFERENCES trade_offers(id)
+FOREIGN KEY (offer_id) REFERENCES trade_offers(id) ON DELETE CASCADE
 );
 
 CREATE TABLE marketplace_listings (
@@ -142,7 +160,15 @@ CHECK (
 )
 );
 
-
+CREATE TABLE item_details (
+item_id INTEGER UNIQUE,
+item_type INTEGER,
+slot INTEGER,
+trader_price INTEGER,
+FOREIGN KEY (item_id) REFERENCES items(id),
+FOREIGN KEY (item_type) REFERENCES item_subcategories(id),
+FOREIGN KEY (slot) REFERENCES item_slot(id)
+);
 
 
 
@@ -158,3 +184,11 @@ INSERT INTO tile_types(type_name,difficulty) VALUES ("Dungeon",16);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Forest",5);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Village",0);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Mountain",25);
+
+
+INSERT INTO item_categories(category_name) VALUES ("Consumable");
+INSERT INTO item_categories(category_name) VALUES ("Weapon");
+INSERT INTO item_categories(category_name) VALUES ("Armor");
+INSERT INTO item_subcategories(subcatergory_name) VALUES ("Shoulder");
+INSERT INTO item_subcategories(subcatergory_name) VALUES ("Consumable");
+INSERT INTO item_subcategories(subcatergory_name) VALUES ("Consumable");

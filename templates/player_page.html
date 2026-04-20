@@ -28,7 +28,7 @@
                  </span>
             </div>
         </td>
-        <td><input type="number" name="stamina" placeholder="{{value.stamina}}" min="{{value.stamina}}" max="{{15-value.total_stats}}"/></td>
+        <td><input type="number" name="stamina" value="{{value.stamina}}" min="{{value.stamina}}" "/></td>
     </tr>
         <tr>
         <td>
@@ -38,7 +38,7 @@
                  </span>
             </div>
         </td>
-        <td><input type="number" name="strength" placeholder="{{value.strength}}" min="{{value.strength}}" max="{{15-value.total_stats}}"/></td>
+        <td><input type="number" name="strength" value="{{value.strength}}" min="{{value.strength}}" "/></td>
     </tr>
         <tr>
             <td>
@@ -48,7 +48,7 @@
                     </span>
                 </div>
             </td>
-        <td><input type="number" name="Agility" placeholder="{{value.Agility}}" min="{{value.Agility}}" max="{{15-value.total_stats}}"/></td>
+        <td><input type="number" name="agility" value="{{value.Agility}}" min="{{value.Agility}}" "/></td>
     </tr>
         <tr>
         <td>
@@ -58,7 +58,7 @@
                  </span>
             </div>
         </td>
-        <td><input type="number" name="magic" placeholder="{{value.magic}}" min="{{value.magic}}" max="{{15-value.total_stats}}"/></td>
+        <td><input type="number" name="magic" value="{{value.magic}}" min="{{value.magic}}" "/></td>
     </tr>
 </table>
 <input type="submit" value="Confirm choices" onclick="return confirm('Are you sure you want to set these skillpoints? Changing them can be difficult.')"/>
@@ -115,7 +115,7 @@
 {%endfor%}
 
 <h2>Inventory:</h2> 
-
+{%if items%}
 <table>
     <tr>
         <th>Item name</th>
@@ -126,6 +126,9 @@
     </tr>
     {%endfor%}
 </table>
+{%else%}
+<ul>Player doesn't have any items</ul>
+{%endif%}
 
 
 {%endblock%}

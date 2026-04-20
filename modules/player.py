@@ -52,3 +52,37 @@ def get_player_info(username):
     return db.query(user_info_sql,[username])
 
 
+def set_stats(username,agility,magic,stamina,strength,total_stats):
+    sql_get_stat_sheet="""
+    SELECT agility,magic,stamina,strength
+    FROM stat_sheet
+    WHERE player_id=(
+    SELECT id
+    FROM users
+    WHERE username=?)
+    """
+    existing_stats=db.query(sql_get_stat_sheet,[username])[0]
+    if agility<existing_stats["agility"] or magic<existing_stats["magic"] or stamina<existing_stats["stamina"] or strength<existing_stats["strength"]:
+        return "Stat can't be less then existing stat"
+    sql_update_stat_sheet="""
+    UPDATE stat_sheet
+    SET agility=?,magic=?,stamina=?,strength=?
+    WHERE player_id=(
+    SELECT id
+    FROM users
+    WHERE username=? AND set_stats=FALSE)
+    AND player_id IS NOT NULL
+    """
+    result=db.execute(sql_update_stat_sheet,[agility,magic,stamina,strength,username])
+    print(result)
+    if result["rows_affected"]==1:
+        if total_stats==15:
+            sql_lock_stats="""
+            UPDATE users
+            SET set_stats=TRUE
+            WHERE username=?
+            """
+            db.execute(sql_lock_stats,[username])
+        return "Stats updated"
+    else:
+        return "All skillpoints have alreade been spent"

@@ -10,7 +10,7 @@ Goals for the project:
 - [x] Players can loot containers
 - [x] Players can view their inventory
 - [x] Players can drop items from their inventory
-- [] Player attribute system
+- [ ] Player attribute system
     - [x] Players have attributes
     - [ ] Players get attributes from items
 - [x] Player home page with stats about the player
@@ -28,7 +28,7 @@ Goals for the project:
     - [x] Players can post trade offers to other players items
     - [ ] Items have categories
     - [x] Marketplace has a search option
-        - [] Search can filter with categories
+        - [ ] Search can filter with categories
     - [x] Gold system
         - [ ] Players can loot gold and sell items to certain NPC's
     - [x] Players can sell items they loot to other players through a marketplace system

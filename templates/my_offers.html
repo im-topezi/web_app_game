@@ -4,11 +4,9 @@
         
 {% block content %}
 
-{%if previous_page and "/inventory" not in previous_page and "/sell" not in previous_page%}
-<a href="{{previous_page}}">&lt;&lt;</a>
-{%else%}
+
 <a href="/">&lt;&lt;</a>
-{%endif%}
+
 
 <h2>
     Offers you have made
@@ -22,7 +20,7 @@
 
 {% for my_offer in my_offers %}
         <div>
-            <form action="/cancel" method="post" >
+            <form action="/cancel_offer" method="post" >
                 <b>{{ my_offer.item_name }}</b>
                 <div>Offered gold: {{my_offer.gold_offer}}</div>
                 <ul>
@@ -64,7 +62,10 @@
                     {%endfor%}
                 </ul>
                 <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="buyer_id" value="{{offer.buyer_id}}"/>
+                <input type="hidden" name="owner" value="{{offer.owner}}"/>
                 <input type="hidden" name="offer_id" value="{{offer.id}}"/>
+                <input type="hidden" name="sold_item_id" value="{{offer.item_id}}"/>
                 <input type="submit" value="accept" onclick="return confirm('Are you sure you want to accept this offer?')" />
             </form>
         </div>
