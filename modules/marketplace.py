@@ -64,6 +64,14 @@ def check_item_owner(item_id,username):
     """
     return db.query(sql,[item_id,username])
 
+def check_item_is_listed(item_id,username):
+    sql="""
+    SELECT id,marketplace_price
+    FROM marketplace_listings WHERE item_id=? 
+    AND (SELECT id FROM users WHERE users.username=?)=seller_id
+    """
+    return db.query(sql,[item_id,username])
+
 def get_item_details(item_id):
     sql="""
     SELECT items.id,items.item_name,items.player,users.username
@@ -244,6 +252,18 @@ def get_offers_for_item(item_id):
     for offer in my_offers:
         offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],offer["username"]))
     return offers
+
+def modify_listing(item_id,username,new_price):
+
+    sql="""
+    UPDATE marketplace_listings
+    SET marketplace_price=?
+    WHERE item_id=?
+    AND seller_id=(SELECT id
+    FROM users
+    WHERE username=?)
+    """
+    db.execute(sql,[new_price,item_id,username])
 
 
 

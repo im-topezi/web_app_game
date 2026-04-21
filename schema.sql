@@ -23,6 +23,13 @@ type_name TEXT PRIMARY KEY,
 difficulty INTEGER
 );
 
+CREATE TABLE npc_types (
+    id INTEGER PRIMARY KEY,
+    npc_type TEXT,
+    biome INTEGER,
+    FOREIGN KEY (biome) REFERENCES tile_types(type_name)
+);
+
 
 CREATE TABLE tiles (
 id INTEGER PRIMARY KEY,
@@ -59,7 +66,9 @@ CREATE TABLE npcs (
 id INTEGER PRIMARY KEY,
 npc_name TEXT,
 tile INTEGER,
-FOREIGN KEY (tile) REFERENCES tiles(id)
+npc_type_id INTEGER,
+FOREIGN KEY (tile) REFERENCES tiles(id),
+FOREIGN KEY (npc_type_id) REFERENCES npc_types(id)
 );
 
 CREATE TABLE containers (
@@ -83,6 +92,7 @@ CREATE TABLE item_subcategories (
 id INTEGER PRIMARY KEY,
 category_id INTEGER,
 subcatergory_name TEXT,
+item_material TEXT,
 FOREIGN KEY (category_id) REFERENCES item_categories(id)
 );
 
@@ -191,23 +201,32 @@ item_id INTEGER UNIQUE,
 damage_style INTEGER,
 min_base_damage INTEGER,
 max_base_damage INTEGER,
-base_speed INTEGER,
+base_speed FLOAT,
 FOREIGN KEY (item_id) REFERENCES items(id),
 FOREIGN KEY (damage_style) REFERENCES damage_styles(id)
+);
+
+CREATE TABLE item_conditions (
+condition_name TEXT,
+material TEXT,
+modifier FLOAT,
+FOREIGN KEY (material) REFERENCES item_subcategories(item_material)
 );
 
 
 
 
 
-
-
-INSERT INTO tile_types(type_name,difficulty) VALUES ("City",0);
-INSERT INTO tile_types(type_name,difficulty) VALUES ("Swamp",20);
-INSERT INTO tile_types(type_name,difficulty) VALUES ("Dungeon",16);
-INSERT INTO tile_types(type_name,difficulty) VALUES ("Forest",5);
+INSERT INTO tile_types(type_name,difficulty) VALUES ("Swamp",50);
+INSERT INTO tile_types(type_name,difficulty) VALUES ("Dungeon",100);
+INSERT INTO tile_types(type_name,difficulty) VALUES ("Forest",30);
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Village",0);
-INSERT INTO tile_types(type_name,difficulty) VALUES ("Mountain",25);
+INSERT INTO tile_types(type_name,difficulty) VALUES ("Mountain",300);
+
+INSERT INTO npc_types(npc_type,biome) VALUES ("Human","Village");
+INSERT INTO npc_types(npc_type,biome) VALUES ("Bear","Forest");
+INSERT INTO npc_types(npc_type,biome) VALUES ("Alligator","Swamp");
+INSERT INTO npc_types(npc_type,biome) VALUES ("Dragon","Mountain");
 
 INSERT INTO damage_types(damage_type) VALUES ("Magic");
 INSERT INTO damage_types(damage_type) VALUES ("Physical");
@@ -224,16 +243,19 @@ INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WH
 INSERT INTO item_categories(category_name) VALUES ("Consumable");
 INSERT INTO item_categories(category_name) VALUES ("Weapon");
 INSERT INTO item_categories(category_name) VALUES ("Armor");
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Metal Armor",(SELECT id FROM item_categories WHERE category_name="Armor"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Leather Armor",(SELECT id FROM item_categories WHERE category_name="Armor"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Cloth Armor",(SELECT id FROM item_categories WHERE category_name="Armor"));
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Metal Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Metal");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Leather Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Leather");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Cloth Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Cloth");
 INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Health Potion",(SELECT id FROM item_categories WHERE category_name="Consumable"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Dagger",(SELECT id FROM item_categories WHERE category_name="Weapon"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Axe",(SELECT id FROM item_categories WHERE category_name="Weapon"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Mace",(SELECT id FROM item_categories WHERE category_name="Weapon"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Sword",(SELECT id FROM item_categories WHERE category_name="Weapon"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"));
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"));
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Dagger",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Axe",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Mace",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Sword",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
+INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
+
+
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rusty","Metal",0.3)
 
 
 INSERT INTO users (username,gold) VALUES ("Test user",1000);

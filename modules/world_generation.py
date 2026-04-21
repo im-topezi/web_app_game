@@ -160,7 +160,27 @@ class Container:
         pass
 
 class Item:
-    def __init__(self):
-        pass
+    def __init__(self,level,location):
+        self.level=level
+        self.location=location
+        self.name=""
+        self.type=""
+        self.stats={
+            "agility":0,
+            "magic":0,
+            "stamina":0,
+            "strength":0,
+            "armor":0
+        }
+        self.damage=0
+        self.speed=0
+        self.slot=""
+    def generate_an_item(self):
+        sql_get_categories="""
+        SELECT category_name FROM item_categories
+        """
+        categories=db.query(sql_get_categories)
+        item_category=random.choice(categories)["category_name"]
+        
 
     

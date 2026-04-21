@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+    
+{% block title %}Welcome to game{% endblock %}
+        
+{% block content %}
+
+<a href="/marketplace">&lt;&lt;</a>
+
+
+
+        <p>
+            <form action="/modify" method="post">
+                {{item_name}}
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="number" min="0" name="new_price" value="{{current_price}}"/>
+                <input type="hidden" name="item_id" value="{{item_id}}"/>
+                <input type="submit" value="Modify"/>
+            </form>
+        </p>
+{% endblock %}

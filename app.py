@@ -197,6 +197,37 @@ def cancel():
     flash(result)
     return redirect("/marketplace")
 
+@app.route("/modify",methods=["GET","POST"])
+@login_required
+@cant_be_in_game
+def modify():
+    if request.method=="GET":
+        item_id=request.args.get("item_id")
+        username=session["username"]
+        item=marketplace.check_item_owner(item_id,username)
+        listing=marketplace.check_item_is_listed(item_id,username)
+        if item and listing:
+            print(listing[0]["marketplace_price"])
+            return render_template("modify_listing.html",item_name=item[0]["item_name"],current_price=listing[0]["marketplace_price"],item_id=item[0]["id"])
+        else:
+            flash("Listing no longer available")
+            return redirect("/marketplace")
+
+    if request.method=="POST":
+        check_csrf()
+        item_id=request.form["item_id"]
+        username=session["username"]
+        new_price=request.form["new_price"]
+        item=marketplace.check_item_owner(item_id,username)
+        listing=marketplace.check_item_is_listed(item_id,username)
+        if item and listing:
+            marketplace.modify_listing(item_id,username,new_price)
+            flash("Listing updated")
+        else:
+            flash("Listing no longer available")
+        return redirect("/marketplace")
+    
+
 @app.route("/cancel_offer",methods=["POST"])
 @login_required
 @cant_be_in_game
