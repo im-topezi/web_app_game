@@ -19,14 +19,14 @@ FOREIGN KEY (player) REFERENCES users(id)
 );
 
 CREATE TABLE tile_types(
-type_name TEXT PRIMARY KEY,
+type_name TEXT UNIQUE,
 difficulty INTEGER
 );
 
 CREATE TABLE npc_types (
     id INTEGER PRIMARY KEY,
     npc_type TEXT,
-    biome INTEGER,
+    biome TEXT,
     FOREIGN KEY (biome) REFERENCES tile_types(type_name)
 );
 
@@ -255,7 +255,7 @@ INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALU
 INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
 
 
-INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rusty","Metal",0.3)
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rusty","Metal",0.3);
 
 
 INSERT INTO users (username,gold) VALUES ("Test user",1000);

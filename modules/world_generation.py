@@ -55,7 +55,8 @@ class World:
         previous_coordinate=tuple()
         while tile_amounts:
             
-            if x==0 and y==0:
+            if x==0 and y==0 and not self.tile_coordinates:
+
                 new_tile=Tile(self,x,y,"Village")
                 self.tile_coordinates.add((x,y))
                 self.tiles.append(new_tile)
@@ -116,6 +117,7 @@ class World:
 
 class Tile:
     def __init__(self,world,x,y,type):
+        self.id=""
         self.world=world
         self.x_coordinate=x
         self.y_coordinate=y
@@ -123,14 +125,28 @@ class Tile:
         self.npcs=[]
         self.containers=[]
         self.save_tile_to_database()
+        self.generate_npcs()
+        self.generate_containers()
 
 
     def save_tile_to_database(self):
         sql="""
         INSERT INTO tiles (world_id,x_coordinate,y_coordinate,tile_type)
         VALUES (?,?,?,?)
+        RETURNING id
         """
-        db.execute(sql,[self.world.world_id,self.x_coordinate,self.y_coordinate,self.type])
+        result=db.execute(sql,[self.world.world_id,self.x_coordinate,self.y_coordinate,self.type])
+        print(result)
+        self.id=result["rows"][0][0]["id"]
+
+    def generate_npcs(self):
+        for i in range(random.randrange(0,3)):
+            self.npcs.append(NPC(self.id,self.type))
+
+    def generate_containers(self):
+        for i in range(random.randrange(0,2)):
+            print(i)
+            self.containers.append(Container(self.id))
 
 class Path:
     def __init__(self,first_tile,second_tile):
@@ -152,12 +168,54 @@ class Path:
 
 
 class NPC:
-    def __init__(self):
-        pass
+    def __init__(self,tile_id,biome):
+        self.id=""
+        self.tile=tile_id
+        self.name="Test NPC"
+        self.type=self.generate_npc_type(biome)
+        self.save_npc_to_database()
+
+
+    def generate_npc_type(self,biome):
+        sql="""
+        SELECT id,npc_type
+        FROM npc_types
+        WHERE biome=?
+        """
+        types=db.query(sql,[biome])
+        return random.choice(types)
+    
+    def save_npc_to_database(self):
+        sql="""
+        INSERT INTO npcs (npc_name,tile,npc_type_id)
+        VALUES (?,?,?)
+        RETURNING id
+        """
+        result=db.execute(sql,[self.name,self.tile,self.type["id"]])
+        print(result)
+        self.id=result["rows"][0][0]["id"]
 
 class Container:
-    def __init__(self):
-        pass
+    def __init__(self,tile_id):
+        self.id=""
+        self.tile=tile_id
+        self.name="Test NPC"
+        self.type=self.generate_container_type()
+        self.save_container_to_database()
+
+
+    def generate_container_type(self):
+        return random.choice(("chest","barrel"))
+    
+    def save_container_to_database(self):
+        sql="""
+        INSERT INTO containers (tile,container_type)
+        VALUES (?,?)
+        RETURNING id
+        """
+        result=db.execute(sql,[self.tile,self.type])
+        print(result)
+        self.id=result["rows"][0][0]["id"]
 
 class Item:
     def __init__(self,level,location):
@@ -181,6 +239,6 @@ class Item:
         """
         categories=db.query(sql_get_categories)
         item_category=random.choice(categories)["category_name"]
-        
+
 
     
