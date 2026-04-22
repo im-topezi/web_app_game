@@ -36,12 +36,11 @@ def check_csrf():
     if request.form["csrf_token"] != session["csrf_token"]:
         abort(403)
 
-@app.after_request
-def set_gold_amount(response):
+@app.before_request
+def set_gold_amount():
     if session.get("username"):
         gold=marketplace.get_gold_amount(session["username"])
         session["gold"]=gold
-    return response
 
 
 @app.route("/")
@@ -100,7 +99,7 @@ def inventory():
     items=player.get_player_items(session["username"])
     return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer else "")
 
-
+#Add checks that you're in the same tile
 @app.route("/loot",methods=["POST","GET"])
 @login_required
 def loot():

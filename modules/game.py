@@ -89,7 +89,7 @@ def take_item(item_id,player):
     WHERE id=?
     """
     result=db.execute(sql,[player,item_id])
-    return result["rows_affected"]
+    return result
 
 
 

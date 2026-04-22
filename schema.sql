@@ -87,7 +87,7 @@ CREATE TABLE item_categories (
 CREATE TABLE item_subcategories (
 id INTEGER PRIMARY KEY,
 category_id INTEGER,
-subcatergory_name TEXT UNIQUE,
+subcategory_name TEXT UNIQUE,
 item_material TEXT,
 FOREIGN KEY (category_id) REFERENCES item_categories(id)
 );
@@ -192,8 +192,7 @@ slot INTEGER,
 item_level INTEGER,
 FOREIGN KEY (slot) REFERENCES item_slots(id),
 FOREIGN KEY (item_id) REFERENCES items(id),
-FOREIGN KEY (item_type) REFERENCES item_subcategories(id),
-FOREIGN KEY (slot) REFERENCES item_slot(id)
+FOREIGN KEY (item_type) REFERENCES item_subcategories(id)
 );
 
 
@@ -253,33 +252,33 @@ INSERT INTO damage_styles(type_id,style) VALUES ((SELECT id FROM damage_types WH
 INSERT INTO item_categories(category_name) VALUES ("Consumable");
 INSERT INTO item_categories(category_name) VALUES ("Weapon");
 INSERT INTO item_categories(category_name) VALUES ("Armor");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Metal Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Metal");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Leather Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Leather");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Cloth Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Cloth");
-INSERT INTO item_subcategories(subcatergory_name,category_id) VALUES ("Health Potion",(SELECT id FROM item_categories WHERE category_name="Consumable"));
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Dagger",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Axe",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Mace",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Sword",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
-INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Metal Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Metal");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Leather Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Leather");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Cloth Armor",(SELECT id FROM item_categories WHERE category_name="Armor"),"Cloth");
+INSERT INTO item_subcategories(subcategory_name,category_id) VALUES ("Health Potion",(SELECT id FROM item_categories WHERE category_name="Consumable"));
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Dagger",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Axe",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Mace",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Sword",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Metal");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
+INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
 
 
 INSERT INTO item_slots (slot_name) VALUES ("Weapon");
 INSERT INTO item_slots (slot_name) VALUES ("Head");
-INSERT INTO item_slots (slot_name) VALUES ("Shoulder");
+INSERT INTO item_slots (slot_name) VALUES ("Shoulders");
 INSERT INTO item_slots (slot_name) VALUES ("Chest");
 INSERT INTO item_slots (slot_name) VALUES ("Legs");
 INSERT INTO item_slots (slot_name) VALUES ("Hands");
 INSERT INTO item_slots (slot_name) VALUES ("Feet");
 
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Rerebraces","Shoulder","Leather Armor");
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Pauldrons","Shoulder","Metal Armor");
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Spaulders","Shoulder","Metal Armor");
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gardbrace","Shoulder","Metal Armor");
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoulder pads","Shoulder","Leather Armor");
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoulder pads","Shoulder","Cloth Armor");
-INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Mantle","Shoulder","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Rerebraces","Shoulders","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Pauldrons","Shoulders","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Spaulders","Shoulders","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gardbrace","Shoulders","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoulder pads","Shoulders","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoulder pads","Shoulders","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Mantle","Shoulders","Cloth Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Coif","Head","Leather Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Arming Cap","Head","Cloth Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hauberk","Chest","Metal Armor");
@@ -317,11 +316,39 @@ INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Sabaton","Feet","Me
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hosen","Legs","Leather Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Chausses","Legs","Metal Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoes","Feet","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Turnshoes","Feet","Leather Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Cuirass","Chest","Metal Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Plackart","Chest","Metal Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hat","Head","Cloth Armor");
 
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rusty","Metal",0.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Iron","Metal",0.7);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Steel","Metal",0.8);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Reinforced Steel","Metal",1.0);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Bronze","Metal",0.5);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Mithril","Metal",1.1);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Stethril","Metal",1.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Copper","Metal",0.4);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rugged","Leather",0.5);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Scrap Leather","Leather",0.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Snake Skin","Leather",0.6);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Alligator Hide","Leather",1.0);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Studded","Leather",0.8);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Dragonhide","Leather",1.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rotten Wood","Wood",0.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Pine","Wood",0.4);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Birch","Wood",0.5);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Oak","Wood",0.7);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Teak","Wood",0.8);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Maple","Wood",1.0);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Torn","Cloth",0.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Cotton","Cloth",0.5);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Linen","Cloth",0.7);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Silk","Cloth",1.3);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Wool","Cloth",1.0);
+
+
+
 
 
 INSERT INTO users (username,gold) VALUES ("Test user",1000);

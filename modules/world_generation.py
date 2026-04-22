@@ -140,13 +140,25 @@ class Tile:
         self.id=result["rows"][0][0]["id"]
 
     def generate_npcs(self):
-        for i in range(random.randrange(0,3)):
+        for i in range(random.randint(0,3)):
             self.npcs.append(NPC(self.id,self.type))
 
     def generate_containers(self):
-        for i in range(random.randrange(0,2)):
-            print(i)
-            self.containers.append(Container(self.id))
+        if self.type=="Village":
+            container_type="barrel"
+        else:
+            container_type="chest"
+
+        if container_type=="barrel":
+            for i in range(random.randint(0,1)):
+                new_container=Container(self.id,container_type)
+                new_container.add_items_to_container(self.world.difficulty)
+                self.containers.append(new_container)
+        else:
+            if (random.randint(1,100))>=90:
+                new_container=Container(self.id,container_type)
+                #new_container.add_items_to_container(self.world.difficulty)
+                self.containers.append(new_container)
 
 class Path:
     def __init__(self,first_tile,second_tile):
@@ -174,6 +186,7 @@ class NPC:
         self.name="Test NPC"
         self.type=self.generate_npc_type(biome)
         self.save_npc_to_database()
+        Item(16,0).generate_a_random_armor("Head")
 
 
     def generate_npc_type(self,biome):
@@ -196,16 +209,12 @@ class NPC:
         self.id=result["rows"][0][0]["id"]
 
 class Container:
-    def __init__(self,tile_id):
+    def __init__(self,tile_id,type):
         self.id=""
         self.tile=tile_id
-        self.name="Test NPC"
-        self.type=self.generate_container_type()
+        self.type=type
         self.save_container_to_database()
 
-
-    def generate_container_type(self):
-        return random.choice(("chest","barrel"))
     
     def save_container_to_database(self):
         sql="""
@@ -216,10 +225,18 @@ class Container:
         result=db.execute(sql,[self.tile,self.type])
         print(result)
         self.id=result["rows"][0][0]["id"]
+    def add_items_to_container(self,difficulty):
+        if self.type=="barrel":
+            new_item=Item(difficulty,{"location":"container","id":self.id})
+            new_range=random.choice([1,1,1,1,1,1,1,1,2])
+            for i in range(new_range):
+                new_item.generate_a_potion()
 
 class Item:
     def __init__(self,level,location):
+        self.id=""
         self.level=level
+        self.price=0
         self.location=location
         self.name=""
         self.type=""
@@ -233,7 +250,31 @@ class Item:
         self.damage=0
         self.speed=0
         self.slot=""
-    def generate_an_item(self):
+
+    def update_location(self):
+        if self.location["location"]=="npc":
+            sql_update_location="""
+            UPDATE items
+            SET npc=?
+            WHERE id=?
+            """
+            db.execute(sql_update_location,[self.location["id"],self.id])
+        elif self.location["location"]=="container":
+            sql_update_location="""
+            UPDATE items
+            SET container=?
+            WHERE id=?
+            """
+            db.execute(sql_update_location,[self.location["id"],self.id])
+        elif self.location["location"]=="player":
+            sql_update_location="""
+            UPDATE items
+            SET player=?
+            WHERE id=?
+            """
+            db.execute(sql_update_location,[self.location["id"],self.id])
+        
+    def generate_a_random_item(self):
         sql_get_categories="""
         SELECT category_name FROM item_categories
         """
@@ -241,4 +282,63 @@ class Item:
         item_category=random.choice(categories)["category_name"]
 
 
-    
+    def generate_a_random_weapon(self):
+        sql_get_categories="""
+        SELECT category_name FROM item_categories
+        """
+        categories=db.query(sql_get_categories)
+        item_category=random.choice(categories)["category_name"]
+
+    def generate_a_random_armor(self,slot):
+        sql_get_categories="""
+        SELECT subcategory_name,item_material
+        FROM item_subcategories
+        WHERE category_id=(SELECT id
+        FROM item_categories
+        WHERE category_name="Armor")
+        """
+        categories=db.query(sql_get_categories)
+        armor_category=random.choice(categories)
+        print(armor_category["item_material"])
+
+        sql_get_conditions="""
+        SELECT condition_name,modifier
+        FROM item_conditions
+        WHERE material=?
+        """
+        conditions=db.query(sql_get_conditions,[armor_category["item_material"]])
+        condition=random.choice(conditions)
+
+        sql_get_armor_name="""
+        SELECT armor_name
+        FROM armor_names
+        WHERE item_type=? AND slot=?
+        """
+        armor_names=db.query(sql_get_armor_name,[armor_category["subcategory_name"],slot])
+        armor_name=random.choice(armor_names)["armor_name"]
+
+        print(condition["condition_name"]+" "+armor_name)
+
+
+
+
+    def generate_a_potion(self):
+        self.name="Health Potion"
+        random_range=float("1."+str(random.randint(1,6)))
+        self.price=(int(self.level)*random_range)//1
+        sql_create_item="""
+        INSERT INTO items (item_name)
+        VALUES ("Health Potion")
+        RETURNING id
+        """
+        result=db.execute(sql_create_item)
+        self.id=result["rows"][0][0]["id"]
+        sql_create_item_details="""
+        INSERT INTO item_details (item_id,item_type,trader_price,item_level)
+        VALUES (?,(SELECT id
+          FROM item_subcategories WHERE subcategory_name="Health Potion")
+          ,?,?)
+        """
+        result2=db.execute(sql_create_item_details,[self.id,self.price,self.level])
+        print(result2)
+        self.update_location()
