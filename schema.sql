@@ -83,20 +83,19 @@ CREATE TABLE item_categories (
     category_name TEXT
 );
 
-CREATE TABLE item_slots (
-id INTEGER PRIMARY KEY,
-slot TEXT
-);
 
 CREATE TABLE item_subcategories (
 id INTEGER PRIMARY KEY,
 category_id INTEGER,
-subcatergory_name TEXT,
+subcatergory_name TEXT UNIQUE,
 item_material TEXT,
 FOREIGN KEY (category_id) REFERENCES item_categories(id)
 );
 
-
+CREATE TABLE item_slots (
+id INTEGER PRIMARY KEY,
+slot_name TEXT UNIQUE
+);
 
 CREATE TABLE items (
 id INTEGER PRIMARY KEY,
@@ -172,7 +171,7 @@ FOREIGN KEY (item_id) REFERENCES items(id),
 
 CHECK (
     player_id IS NULL
-    OR player_id IS NOT NULL AND (npc_id IS NULL AND item_id IS NULL) AND ((stamina+strength+agility+magic)<16) AND (armor=0)
+    OR player_id IS NOT NULL AND (npc_id IS NULL AND item_id IS NULL) AND ((stamina+strength+agility+magic)<16 AND (armor=0))
 ),
 CHECK (
     npc_id IS NULL
@@ -188,8 +187,10 @@ CHECK (
 CREATE TABLE item_details (
 item_id INTEGER UNIQUE,
 item_type INTEGER,
-slot INTEGER,
 trader_price INTEGER,
+slot INTEGER,
+item_level INTEGER,
+FOREIGN KEY (slot) REFERENCES item_slots(id),
 FOREIGN KEY (item_id) REFERENCES items(id),
 FOREIGN KEY (item_type) REFERENCES item_subcategories(id),
 FOREIGN KEY (slot) REFERENCES item_slot(id)
@@ -206,11 +207,20 @@ FOREIGN KEY (item_id) REFERENCES items(id),
 FOREIGN KEY (damage_style) REFERENCES damage_styles(id)
 );
 
+
 CREATE TABLE item_conditions (
 condition_name TEXT,
 material TEXT,
 modifier FLOAT,
 FOREIGN KEY (material) REFERENCES item_subcategories(item_material)
+);
+
+CREATE TABLE armor_names (
+    armor_name TEXT,
+    slot TEXT,
+    item_type TEXT,
+    FOREIGN KEY (slot) REFERENCES item_slots(item_slot),
+    FOREIGN KEY (item_type) REFERENCES item_subcategories(subcatergory_name)
 );
 
 
@@ -254,6 +264,62 @@ INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALU
 INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
 INSERT INTO item_subcategories(subcatergory_name,category_id,item_material) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
 
+
+INSERT INTO item_slots (slot_name) VALUES ("Weapon");
+INSERT INTO item_slots (slot_name) VALUES ("Head");
+INSERT INTO item_slots (slot_name) VALUES ("Shoulder");
+INSERT INTO item_slots (slot_name) VALUES ("Chest");
+INSERT INTO item_slots (slot_name) VALUES ("Legs");
+INSERT INTO item_slots (slot_name) VALUES ("Hands");
+INSERT INTO item_slots (slot_name) VALUES ("Feet");
+
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Rerebraces","Shoulder","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Pauldrons","Shoulder","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Spaulders","Shoulder","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gardbrace","Shoulder","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoulder pads","Shoulder","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoulder pads","Shoulder","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Mantle","Shoulder","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Coif","Head","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Arming Cap","Head","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hauberk","Chest","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Great Helm","Head","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Saller","Head","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Robe","Chest","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Tunic","Chest","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Blouse","Chest","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Pants","Legs","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Leggings","Legs","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Legs","Legs","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Kilt","Legs","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Skirt","Legs","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Trousers","Legs","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shorts","Legs","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hood","Head","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Helmet","Head","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Helmet","Head","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gloves","Hands","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gloves","Hands","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Vambraces","Hands","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Mittens","Hands","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gauntlets","Hands","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Chaps","Legs","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Gloves","Hands","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Boots","Feet","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Greaves","Legs","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Cuisses","Legs","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Tasset","Legs","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Boots","Feet","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Sandals","Feet","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Sandals","Feet","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Tasset","Legs","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Sabaton","Feet","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hosen","Legs","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Chausses","Legs","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Shoes","Feet","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Cuirass","Chest","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Plackart","Chest","Metal Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Hat","Head","Cloth Armor");
 
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Rusty","Metal",0.3);
 
