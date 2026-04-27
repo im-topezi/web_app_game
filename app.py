@@ -295,7 +295,7 @@ def accept_trade_offer():
 def generate_new_world():
     check_csrf()
     if request.form["world_name"]:
-        world.World(16,session["username"],request.form["world_name"]).generate_world()
+        world.World(1,session["username"],request.form["world_name"]).generate_world()
         flash("New world generated!")
     else:
         flash("World needs a name!")

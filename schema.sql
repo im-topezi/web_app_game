@@ -37,7 +37,7 @@ world_id TEXT,
 x_coordinate INTEGER,
 y_coordinate INTEGER,
 tile_type TEXT,
-FOREIGN KEY (world_id) REFERENCES worlds(id),
+FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE,
 FOREIGN KEY (tile_type) REFERENCES tile_types(type_name)
 UNIQUE (world_id,x_coordinate,y_coordinate)
 );
@@ -67,7 +67,7 @@ id INTEGER PRIMARY KEY,
 npc_name TEXT,
 tile INTEGER,
 npc_type_id INTEGER,
-FOREIGN KEY (tile) REFERENCES tiles(id),
+FOREIGN KEY (tile) REFERENCES tiles(id) ON DELETE CASCADE,
 FOREIGN KEY (npc_type_id) REFERENCES npc_types(id)
 );
 
@@ -75,7 +75,7 @@ CREATE TABLE containers (
 id INTEGER PRIMARY KEY,
 container_type TEXT,
 tile INTEGER,
-FOREIGN KEY (tile) REFERENCES tiles(id)
+FOREIGN KEY (tile) REFERENCES tiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE item_categories (
@@ -143,7 +143,7 @@ id INTEGER PRIMARY KEY,
 item_id INTEGER NOT NULL,
 seller_id INTEGER NOT NULL,
 marketplace_price INTEGER,
-FOREIGN KEY (item_id) REFERENCES items(id),
+FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
 FOREIGN KEY (seller_id) REFERENCES users(id)
 );
 
@@ -165,9 +165,9 @@ armor INTEGER DEFAULT 0,
 player_id INTEGER UNIQUE,
 npc_id INTEGER UNIQUE,
 item_id INTEGER UNIQUE,
-FOREIGN KEY (player_id) REFERENCES users(id),
-FOREIGN KEY (npc_id) REFERENCES npcs(id),
-FOREIGN KEY (item_id) REFERENCES items(id),
+FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE,
+FOREIGN KEY (npc_id) REFERENCES npcs(id) ON DELETE CASCADE,
+FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
 
 CHECK (
     player_id IS NULL
@@ -183,6 +183,27 @@ CHECK (
 )
 );
 
+CREATE TABLE equipped_items (
+player_id INTEGER,
+npc_id INTEGER,
+item_id INTEGER UNIQUE,
+slot INTEGER,
+UNIQUE (player_id,npc_id,slot),
+FOREIGN KEY (slot) REFERENCES item_slots(id),
+FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE,
+FOREIGN KEY (npc_id) REFERENCES npcs(id) ON DELETE CASCADE,
+FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+
+CHECK (
+    player_id IS NULL
+    OR player_id IS NOT NULL AND (npc_id IS NULL)
+),
+CHECK (
+    npc_id IS NULL
+    OR npc_id IS NOT NULL AND (player_id IS NULL)
+)
+);
+
 
 CREATE TABLE item_details (
 item_id INTEGER UNIQUE,
@@ -190,8 +211,9 @@ item_type INTEGER,
 trader_price INTEGER,
 slot INTEGER,
 item_level INTEGER,
+rarity TEXT,
 FOREIGN KEY (slot) REFERENCES item_slots(id),
-FOREIGN KEY (item_id) REFERENCES items(id),
+FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
 FOREIGN KEY (item_type) REFERENCES item_subcategories(id)
 );
 
@@ -199,11 +221,13 @@ FOREIGN KEY (item_type) REFERENCES item_subcategories(id)
 CREATE TABLE weapon_details (
 item_id INTEGER UNIQUE,
 damage_style INTEGER,
-min_base_damage INTEGER,
-max_base_damage INTEGER,
-base_speed FLOAT,
-FOREIGN KEY (item_id) REFERENCES items(id),
+secondary_style INTEGER,
+min_damage INTEGER,
+max_damage INTEGER,
+weapon_speed FLOAT,
+FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
 FOREIGN KEY (damage_style) REFERENCES damage_styles(id)
+FOREIGN KEY (secondary_style) REFERENCES damage_styles(id)
 );
 
 
@@ -221,6 +245,20 @@ CREATE TABLE armor_names (
     FOREIGN KEY (slot) REFERENCES item_slots(item_slot),
     FOREIGN KEY (item_type) REFERENCES item_subcategories(subcatergory_name)
 );
+
+CREATE TABLE weapon_speeds (
+    weapon_type TEXT,
+    speed FLOAT,
+    FOREIGN KEY (weapon_type) REFERENCES item_subcategories(subcategory_name)
+);
+
+CREATE TABLE armor_multipliers (
+    armor_slot TEXT,
+    multiplier FLOAT,
+    FOREIGN KEY (armor_slot) REFERENCES item_slots(slot_name)
+);
+
+
 
 
 
@@ -263,6 +301,12 @@ INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUE
 INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Staff",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
 INSERT INTO item_subcategories(subcategory_name,category_id,item_material) VALUES ("Wand",(SELECT id FROM item_categories WHERE category_name="Weapon"),"Wood");
 
+INSERT INTO weapon_speeds(weapon_type,speed) VALUES ("Dagger",0.8);
+INSERT INTO weapon_speeds(weapon_type,speed) VALUES ("Axe",1.7);
+INSERT INTO weapon_speeds(weapon_type,speed) VALUES ("Mace",2);
+INSERT INTO weapon_speeds(weapon_type,speed) VALUES ("Sword",1.2);
+INSERT INTO weapon_speeds(weapon_type,speed) VALUES ("Staff",1.5);
+INSERT INTO weapon_speeds(weapon_type,speed) VALUES ("Wand",0.7);
 
 INSERT INTO item_slots (slot_name) VALUES ("Weapon");
 INSERT INTO item_slots (slot_name) VALUES ("Head");
@@ -271,6 +315,13 @@ INSERT INTO item_slots (slot_name) VALUES ("Chest");
 INSERT INTO item_slots (slot_name) VALUES ("Legs");
 INSERT INTO item_slots (slot_name) VALUES ("Hands");
 INSERT INTO item_slots (slot_name) VALUES ("Feet");
+
+INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Head",5);
+INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Shoulders",6);
+INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Chest",10);
+INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Legs",7);
+INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Hands",4);
+INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Feet",3);
 
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Rerebraces","Shoulders","Leather Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Pauldrons","Shoulders","Metal Armor");
@@ -287,6 +338,8 @@ INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Saller","Head","Met
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Robe","Chest","Cloth Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Tunic","Chest","Cloth Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Blouse","Chest","Cloth Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Body","Chest","Leather Armor");
+INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Jacket","Chest","Leather Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Pants","Legs","Cloth Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Leggings","Legs","Cloth Armor");
 INSERT INTO armor_names (armor_name,slot,item_type) VALUES ("Legs","Legs","Leather Armor");

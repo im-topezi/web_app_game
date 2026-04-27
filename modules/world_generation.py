@@ -11,7 +11,7 @@ class World:
         self.name=name
         self.paths=[]
         self.save_world_to_database()
-        print(self.player)
+        
 
 
     def save_world_to_database(self):
@@ -75,7 +75,7 @@ class World:
                             x,y=self.choose_direction(x,y)
                             break
                         else:
-                            print(tile_amounts,tile_type)
+                            
                             new_tile=Tile(self,x,y,tile_type)
                             self.tile_coordinates.add((x,y))
                             self.tiles.append(new_tile)
@@ -93,7 +93,7 @@ class World:
                         previous_coordinate=(x,y)
                         x,y=self.choose_direction(x,y)
                     else:
-                        print(tile_amounts,tile_type)
+                        
                         new_tile=Tile(self,x,y,tile_type)
                         self.tile_coordinates.add((x,y))
                         self.tiles.append(new_tile)
@@ -105,9 +105,7 @@ class World:
                         previous_coordinate=(x,y)
                         x,y=self.choose_direction(x,y)
                         previous_tile=new_tile
-                        tile_amounts[tile_type]-=1
-        for path in self.paths:
-            print(path)
+                        tile_amounts[tile_type]-=1    
         return(len(self.tiles),len(self.paths))
 
                             
@@ -126,8 +124,13 @@ class Tile:
         self.containers=[]
         self.save_tile_to_database()
         self.generate_npcs()
+        self.generate_gear()
         self.generate_containers()
 
+    def generate_gear(self):
+        for npc in self.npcs:
+            npc.generate_items(self.world.difficulty)
+            npc.equip_items()
 
     def save_tile_to_database(self):
         sql="""
@@ -136,7 +139,6 @@ class Tile:
         RETURNING id
         """
         result=db.execute(sql,[self.world.world_id,self.x_coordinate,self.y_coordinate,self.type])
-        print(result)
         self.id=result["rows"][0][0]["id"]
 
     def generate_npcs(self):
@@ -173,7 +175,6 @@ class Path:
         VALUES ((SELECT id FROM tiles WHERE x_coordinate=? AND y_coordinate=? AND world_id=?),(SELECT id FROM tiles WHERE x_coordinate=? AND y_coordinate=? AND world_id=?))
         """
         db.execute(sql,[self.first_tile.x_coordinate,self.first_tile.y_coordinate,self.first_tile.world.world_id,self.second_tile.x_coordinate,self.second_tile.y_coordinate,self.second_tile.world.world_id])
-        print(sql)
 
     def __str__(self):
         return f"Goes from {self.first_tile.x_coordinate},{self.first_tile.y_coordinate} to {self.second_tile.x_coordinate},{self.second_tile.y_coordinate}"
@@ -186,8 +187,46 @@ class NPC:
         self.name="Test NPC"
         self.type=self.generate_npc_type(biome)
         self.save_npc_to_database()
-        Item(16,0).generate_a_random_armor("Head")
+        self.items=[]
 
+
+    def generate_items(self,world_level):
+        stats=world_level
+        if self.type["npc_type"]=="Human":
+            
+            sql_get_slots="""
+            SELECT slot_name
+            FROM item_slots
+            """
+            slots=db.query(sql_get_slots)
+            weapon_stats=random.randint(1,stats)
+            stats-=weapon_stats
+            weapon=Item(world_level,{"id":self.id,"location":"npc"})
+            weapon.generate_a_random_weapon(weapon_stats)
+            for slot in slots:
+                if slot["slot_name"]=="Weapon":
+                    slots.remove(slot)
+            self.items.append(weapon)
+            while stats>0 and slots:
+                armor_stats=random.randint(1,stats)
+                stats-=armor_stats
+                slot=random.choice(slots)
+                armor=Item(world_level,{"id":self.id,"location":"npc"})
+                armor.generate_a_random_armor(slot["slot_name"],armor_stats)
+                slots.remove(slot)
+                self.items.append(armor)
+            
+    def equip_items(self):
+        for item in self.items:
+            sql="""
+            INSERT INTO equipped_items (
+            npc_id,item_id,slot)
+            VALUES (?,?,(SELECT id
+            FROM item_slots
+            WHERE slot_name=?))
+            """
+            result=db.execute(sql,[self.id,item.id,item.slot])
+            print(result)
 
     def generate_npc_type(self,biome):
         sql="""
@@ -205,7 +244,6 @@ class NPC:
         RETURNING id
         """
         result=db.execute(sql,[self.name,self.tile,self.type["id"]])
-        print(result)
         self.id=result["rows"][0][0]["id"]
 
 class Container:
@@ -223,7 +261,6 @@ class Container:
         RETURNING id
         """
         result=db.execute(sql,[self.tile,self.type])
-        print(result)
         self.id=result["rows"][0][0]["id"]
     def add_items_to_container(self,difficulty):
         if self.type=="barrel":
@@ -240,6 +277,8 @@ class Item:
         self.location=location
         self.name=""
         self.type=""
+        self.subtype=""
+        self.rarity=""
         self.stats={
             "agility":0,
             "magic":0,
@@ -247,9 +286,79 @@ class Item:
             "strength":0,
             "armor":0
         }
-        self.damage=0
+        self.damage=tuple()
         self.speed=0
         self.slot=""
+
+    def add_item_to_database(self):
+        sql_create_item="""
+        INSERT INTO items (item_name)
+        VALUES (?)
+        RETURNING id
+        """
+        result=db.execute(sql_create_item,[self.name])
+        self.id=result["rows"][0][0]["id"]
+        
+
+        sql_create_item_details="""
+        INSERT INTO item_details (item_id,item_type,trader_price,item_level,slot)
+        VALUES (?,(SELECT id
+          FROM item_subcategories WHERE subcategory_name=?)
+          ,?,?,(SELECT id
+          FROM item_slots WHERE slot_name=?))
+        """
+
+        db.execute(sql_create_item_details,[self.id,self.subtype,self.price,self.level,self.slot])
+
+        sql_create_stat_sheet="""
+        INSERT INTO stat_sheet (stamina,strength,agility,magic,armor,item_id)
+        VALUES (?,?,?,?,?,?)
+        """
+        db.execute(sql_create_stat_sheet,[self.stats["stamina"],self.stats["strength"],self.stats["agility"],self.stats["magic"],self.stats["armor"],self.id])
+
+        if self.type=="Weapon":
+            weapon_details_parameters=[self.id,self.damage[0],self.damage[1],self.speed]
+            magic_styles_sql="""
+            SELECT damage_styles.id,style
+            FROM damage_styles
+            LEFT JOIN damage_types 
+            ON damage_types.id=damage_styles.type_id
+            WHERE damage_type="Magic"
+            """
+            magic_styles=db.query(magic_styles_sql)
+            weapon_details_sql="""
+            INSERT INTO weapon_details (item_id,min_damage,max_damage,weapon_speed,damage_style,secondary_style)
+            VALUES (?,?,?,?,?,?)
+            """
+            if self.subtype=="Staff":
+                weapon_details_parameters.append(random.choice(magic_styles)["id"])
+                crush_sql="SELECT id FROM damage_styles WHERE style='Crush'"
+
+                weapon_details_parameters.append(db.query(crush_sql)[0]["id"])
+            elif self.subtype=="Wand":
+                weapon_details_parameters.append(random.choice(magic_styles)["id"])
+                weapon_details_parameters.append(None)
+            elif self.subtype=="Mace":
+                crush_sql="SELECT id FROM damage_styles WHERE style='Crush'"
+                weapon_details_parameters.append(db.query(crush_sql)[0]["id"])
+                weapon_details_parameters.append(None)
+            elif self.subtype=="Axe":
+                slash_sql="SELECT id FROM damage_styles WHERE style='Slash'"
+                weapon_details_parameters.append(db.query(slash_sql)[0]["id"])
+                crush_sql="SELECT id FROM damage_styles WHERE style='Crush'"
+                weapon_details_parameters.append(db.query(crush_sql)[0]["id"])
+            elif self.subtype=="Sword":
+                slash_sql="SELECT id FROM damage_styles WHERE style='Slash'"
+                weapon_details_parameters.append(db.query(slash_sql)[0]["id"])
+                stab_sql="SELECT id FROM damage_styles WHERE style='Stab'"
+                weapon_details_parameters.append(db.query(stab_sql)[0]["id"])
+            elif self.subtype=="Dagger":
+                stab_sql="SELECT id FROM damage_styles WHERE style='Stab'"
+                weapon_details_parameters.append(db.query(stab_sql)[0]["id"])
+                slash_sql="SELECT id FROM damage_styles WHERE style='Slash'"
+                weapon_details_parameters.append(db.query(slash_sql)[0]["id"])
+
+            result=db.execute(weapon_details_sql,weapon_details_parameters)
 
     def update_location(self):
         if self.location["location"]=="npc":
@@ -282,14 +391,157 @@ class Item:
         item_category=random.choice(categories)["category_name"]
 
 
-    def generate_a_random_weapon(self):
+    def generate_a_random_weapon(self,stats):
+        def define_damage_value(condition_modifier,item_level,weapon_type):
+            get_weapon_speed_sql="""
+            SELECT speed
+            FROM weapon_speeds
+            WHERE weapon_type=?
+            """
+            speed=db.query(get_weapon_speed_sql,[weapon_type])[0]["speed"]
+            base_dmg=speed*item_level//1
+            max_dmg=base_dmg+(base_dmg*condition_modifier)//1
+            return (speed,base_dmg,max_dmg)
+        
+        def allocate_stats(weapon_type,stat_amount):
+
+            if weapon_type==("Dagger" or "Sword"):
+                stats={
+                    "agility":0,
+                    "stamina":0,
+                    "strength":0
+                }
+                for i in range(stat_amount):
+                    random_value=random.randint(1,100)
+                    if random_value>90:
+                        stats["strength"]+=1
+                    elif random_value>45:
+                        stats["agility"]+=1
+                    else:
+                        stats["stamina"]+=1
+            if weapon_type==("Wand" or "Staff"):
+                stats={
+                    "agility":0,
+                    "stamina":0,
+                    "magic":0
+                }
+                for i in range(stat_amount):
+                    random_value=random.randint(1,100)
+                    if random_value>90:
+                        stats["agility"]+=1
+                    elif random_value>45:
+                        stats["magic"]+=1
+                    else:
+                        stats["stamina"]+=1
+            else:
+                stats={
+                    "agility":0,
+                    "stamina":0,
+                    "strength":0
+                }
+                for i in range(stat_amount):
+                    random_value=random.randint(1,100)
+                    if random_value>90:
+                        stats["agility"]+=1
+                    elif random_value>45:
+                        stats["strength"]+=1
+                    else:
+                        stats["stamina"]+=1
+            return stats
+
+        
         sql_get_categories="""
-        SELECT category_name FROM item_categories
+        SELECT subcategory_name,item_material
+        FROM item_subcategories
+        WHERE category_id=(SELECT id
+        FROM item_categories
+        WHERE category_name="Weapon")
         """
         categories=db.query(sql_get_categories)
-        item_category=random.choice(categories)["category_name"]
+        weapon_category=random.choice(categories)
 
-    def generate_a_random_armor(self,slot):
+        sql_get_conditions="""
+        SELECT condition_name,modifier
+        FROM item_conditions
+        WHERE material=?
+        """
+        conditions=db.query(sql_get_conditions,[weapon_category["item_material"]])
+        condition=random.choice(conditions)
+
+        damage=define_damage_value(condition["modifier"],self.level,weapon_category["subcategory_name"])
+        self.speed=damage[0]
+        self.damage=(damage[1],damage[2])
+        self.name=condition["condition_name"]+" "+weapon_category["subcategory_name"]
+        allocated_stats=allocate_stats(weapon_category["subcategory_name"],stats)
+        for stat in allocated_stats:
+            self.stats[stat]=allocated_stats[stat]
+        self.type="Weapon"
+        self.slot="Weapon"
+        self.subtype=weapon_category["subcategory_name"]
+        self.add_item_to_database()
+        self.update_location()
+
+    def generate_a_random_armor(self,slot,stats):
+
+        def define_armor_value(condition_modifier,slot,item_level,armor_type):
+            get_armor_multiplier_sql="""
+            SELECT multiplier
+            FROM armor_multipliers
+            WHERE armor_slot=?
+            """
+            multiplier=db.query(get_armor_multiplier_sql,[slot])[0]["multiplier"]
+            armor_values={"Metal Armor":1,
+             "Leather Armor":0.5,
+             "Cloth Armor": 0.2}
+            armor=item_level*multiplier*condition_modifier*armor_values[armor_type]//1
+            return int(armor)
+        
+        def allocate_stats(armor_type,stat_amount):
+            if armor_type=="Metal Armor":
+                stats={
+                    "agility":0,
+                    "stamina":0,
+                    "strength":0
+                }
+                for i in range(stat_amount):
+                    random_value=random.randint(1,100)
+                    if random_value>90:
+                        stats["agility"]+=1
+                    elif random_value>45:
+                        stats["strength"]+=1
+                    else:
+                        stats["stamina"]+=1
+            if armor_type=="Leather Armor":
+                stats={
+                    "agility":0,
+                    "stamina":0,
+                    "strength":0
+                }
+                for i in range(stat_amount):
+                    random_value=random.randint(1,100)
+                    if random_value>90:
+                        stats["strength"]+=1
+                    elif random_value>45:
+                        stats["agility"]+=1
+                    else:
+                        stats["stamina"]+=1
+            if armor_type=="Cloth Armor":
+                stats={
+                    "agility":0,
+                    "stamina":0,
+                    "magic":0
+                }
+                for i in range(stat_amount):
+                    random_value=random.randint(1,100)
+                    if random_value>90:
+                        stats["agility"]+=1
+                    elif random_value>45:
+                        stats["magic"]+=1
+                    else:
+                        stats["stamina"]+=1
+            return stats
+
+        
         sql_get_categories="""
         SELECT subcategory_name,item_material
         FROM item_subcategories
@@ -299,7 +551,6 @@ class Item:
         """
         categories=db.query(sql_get_categories)
         armor_category=random.choice(categories)
-        print(armor_category["item_material"])
 
         sql_get_conditions="""
         SELECT condition_name,modifier
@@ -316,8 +567,19 @@ class Item:
         """
         armor_names=db.query(sql_get_armor_name,[armor_category["subcategory_name"],slot])
         armor_name=random.choice(armor_names)["armor_name"]
-
-        print(condition["condition_name"]+" "+armor_name)
+        armor=define_armor_value(condition["modifier"],slot,self.level,armor_category["subcategory_name"])
+        self.name=condition["condition_name"]+" "+armor_name
+        allocated_stats=allocate_stats(armor_category["subcategory_name"],stats)
+        for stat in allocated_stats:
+            self.stats[stat]=allocated_stats[stat]
+        self.stats["armor"]=armor
+        self.slot=slot
+        self.type="Armor"
+        self.subtype=armor_category["subcategory_name"]
+        self.add_item_to_database()
+        self.update_location()
+        
+        
 
 
 
@@ -340,5 +602,4 @@ class Item:
           ,?,?)
         """
         result2=db.execute(sql_create_item_details,[self.id,self.price,self.level])
-        print(result2)
         self.update_location()
