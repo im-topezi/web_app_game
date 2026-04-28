@@ -58,8 +58,8 @@ CREATE TABLE paths (
 id INTEGER PRIMARY KEY,
 first_tile INTEGER,
 second_tile INTEGER,
-FOREIGN KEY (first_tile) REFERENCES tiles(id),
-FOREIGN KEY (second_tile) REFERENCES tiles(id)
+FOREIGN KEY (first_tile) REFERENCES tiles(id) ON DELETE CASCADE,
+FOREIGN KEY (second_tile) REFERENCES tiles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE npcs (
@@ -103,9 +103,9 @@ item_name TEXT,
 npc INTEGER,
 player INTEGER,
 container INTEGER,
-FOREIGN KEY (npc) REFERENCES npcs(id),
+FOREIGN KEY (npc) REFERENCES npcs(id) ON DELETE CASCADE,
 FOREIGN KEY (player) REFERENCES users(id),
-FOREIGN KEY (container) REFERENCES containers(id),
+FOREIGN KEY (container) REFERENCES containers(id) ON DELETE CASCADE,
 CHECK (
     player IS NULL
     OR player IS NOT NULL AND (npc IS NULL AND container IS NULL)
@@ -274,6 +274,7 @@ INSERT INTO npc_types(npc_type,biome) VALUES ("Human","Village");
 INSERT INTO npc_types(npc_type,biome) VALUES ("Bear","Forest");
 INSERT INTO npc_types(npc_type,biome) VALUES ("Alligator","Swamp");
 INSERT INTO npc_types(npc_type,biome) VALUES ("Dragon","Mountain");
+INSERT INTO npc_types(npc_type,biome) VALUES ("Skeleton","Dungeon");
 
 INSERT INTO damage_types(damage_type) VALUES ("Magic");
 INSERT INTO damage_types(damage_type) VALUES ("Physical");
@@ -396,20 +397,11 @@ INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Teak","W
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Maple","Wood",1.0);
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Torn","Cloth",0.3);
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Cotton","Cloth",0.5);
-INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Linen","Cloth",0.7);
+INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Linen","Cloth",0.8);
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Silk","Cloth",1.3);
 INSERT INTO item_conditions (condition_name,material,modifier) VALUES ("Wool","Cloth",1.0);
 
 
 
-
-
-INSERT INTO users (username,gold) VALUES ("Test user",1000);
-INSERT INTO users (username,gold) VALUES ("Test user2",1000);
-INSERT INTO items (item_name,player) VALUES ("Rusty sword",1);
-INSERT INTO items (item_name,player) VALUES ("Super sword",2);
-INSERT INTO marketplace_listings (item_id,seller_id,marketplace_price) VALUES (1,1,100);
-INSERT INTO trade_offers (sold_item,buyer_id,gold_offer) VALUES (1,2,40);
-INSERT INTO offered_items (offer_id,item_id) VALUES (1,2);
 
 

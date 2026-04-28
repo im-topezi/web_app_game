@@ -295,10 +295,21 @@ def accept_trade_offer():
 def generate_new_world():
     check_csrf()
     if request.form["world_name"]:
-        world.World(1,session["username"],request.form["world_name"]).generate_world()
+        world.World(50,session["username"],request.form["world_name"]).generate_world()
         flash("New world generated!")
     else:
         flash("World needs a name!")
+    return redirect("/")
+
+@app.route("/delete",methods=["POST"])
+@login_required
+@cant_be_in_game
+def delete_world():
+    check_csrf()
+    if request.form["world_id"]:
+        result=player.delete_world(request.form["world_id"],session["username"])
+        flash(result)
+
     return redirect("/")
 
 

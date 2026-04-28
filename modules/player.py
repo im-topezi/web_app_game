@@ -4,19 +4,42 @@ import modules.db as db
 
 def get_player_items(username):
     sql="""
-    SELECT * 
+    SELECT items.id,items.player,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
     FROM items 
     LEFT JOIN marketplace_listings ON marketplace_listings.item_id=items.id
     LEFT JOIN offered_items ON offered_items.item_id=items.id
+    LEFT JOIN equipped_items ON equipped_items.item_id=items.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
     WHERE player=(SELECT id 
     FROM users 
     WHERE username=?)
     AND marketplace_listings.item_id IS NULL
     AND offered_items.item_id IS NULL
+    AND equipped_items.item_id IS NULL
     """
     items=db.query(sql,[username])
     return items
 
+
+def delete_world(world_id,username):
+    sql="""
+    DELETE FROM worlds
+    WHERE id=? 
+    AND player=(SELECT id 
+    FROM users 
+    WHERE username=?) 
+    """
+    result=db.execute(sql,[world_id,username])
+    if result["error"]:
+        print(result)
+        return "Database error"
+        
+    if result["rows_affected"]>=1:
+        return "World destroyed!"
 
 def drop_item(item_id,player):
     sql="""
@@ -29,7 +52,7 @@ def drop_item(item_id,player):
     result=db.execute(sql,[player,item_id])
     if result["error"]:
         return "Database error"
-    if result["rows_affected"]==1:
+    if result["rows_affected"]>=1:
         return "Item dropped"
     
 
@@ -85,4 +108,4 @@ def set_stats(username,agility,magic,stamina,strength,total_stats):
             db.execute(sql_lock_stats,[username])
         return "Stats updated"
     else:
-        return "All skillpoints have alreade been spent"
+        return "All skillpoints have already been spent"

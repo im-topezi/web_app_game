@@ -184,15 +184,15 @@ class NPC:
     def __init__(self,tile_id,biome):
         self.id=""
         self.tile=tile_id
-        self.name="Test NPC"
         self.type=self.generate_npc_type(biome)
+        self.name=self.type["npc_type"]
         self.save_npc_to_database()
         self.items=[]
 
 
     def generate_items(self,world_level):
         stats=world_level
-        if self.type["npc_type"]=="Human":
+        if self.type["npc_type"]==("Human" or "Skeleton"):
             
             sql_get_slots="""
             SELECT slot_name
@@ -301,14 +301,15 @@ class Item:
         
 
         sql_create_item_details="""
-        INSERT INTO item_details (item_id,item_type,trader_price,item_level,slot)
+        INSERT INTO item_details (item_id,item_type,trader_price,item_level,slot,rarity)
         VALUES (?,(SELECT id
           FROM item_subcategories WHERE subcategory_name=?)
           ,?,?,(SELECT id
-          FROM item_slots WHERE slot_name=?))
+          FROM item_slots WHERE slot_name=?),?)
         """
 
-        db.execute(sql_create_item_details,[self.id,self.subtype,self.price,self.level,self.slot])
+        details=db.execute(sql_create_item_details,[self.id,self.subtype,self.price,self.level,self.slot,self.rarity])
+        
 
         sql_create_stat_sheet="""
         INSERT INTO stat_sheet (stamina,strength,agility,magic,armor,item_id)
@@ -382,6 +383,20 @@ class Item:
             WHERE id=?
             """
             db.execute(sql_update_location,[self.location["id"],self.id])
+
+    def define_rarity(self,modifier,level,stats):
+        stat_value=stats/level
+        if stat_value>0.90 and modifier>=1:
+            self.rarity="Legendary"
+        elif stat_value>0.80 and modifier>=0.8:
+            self.rarity="Epic"
+        elif stat_value>0.60 and modifier>=0.7:
+            self.rarity="Rare"
+        elif stat_value>0.45 and modifier>=0.5:
+            self.rarity="Uncommon"
+        else:
+            self.rarity="Common"
+        print(self.rarity)
         
     def generate_a_random_item(self):
         sql_get_categories="""
@@ -399,8 +414,8 @@ class Item:
             WHERE weapon_type=?
             """
             speed=db.query(get_weapon_speed_sql,[weapon_type])[0]["speed"]
-            base_dmg=speed*item_level//1
-            max_dmg=base_dmg+(base_dmg*condition_modifier)//1
+            base_dmg=speed*item_level//1+1
+            max_dmg=base_dmg+(base_dmg*condition_modifier)//1+2
             return (speed,base_dmg,max_dmg)
         
         def allocate_stats(weapon_type,stat_amount):
@@ -477,6 +492,7 @@ class Item:
             self.stats[stat]=allocated_stats[stat]
         self.type="Weapon"
         self.slot="Weapon"
+        self.define_rarity(condition["modifier"],self.level,stats)
         self.subtype=weapon_category["subcategory_name"]
         self.add_item_to_database()
         self.update_location()
@@ -575,6 +591,7 @@ class Item:
         self.stats["armor"]=armor
         self.slot=slot
         self.type="Armor"
+        self.define_rarity(condition["modifier"],self.level,stats)
         self.subtype=armor_category["subcategory_name"]
         self.add_item_to_database()
         self.update_location()
@@ -596,10 +613,10 @@ class Item:
         result=db.execute(sql_create_item)
         self.id=result["rows"][0][0]["id"]
         sql_create_item_details="""
-        INSERT INTO item_details (item_id,item_type,trader_price,item_level)
+        INSERT INTO item_details (item_id,item_type,trader_price,item_level,rarity)
         VALUES (?,(SELECT id
           FROM item_subcategories WHERE subcategory_name="Health Potion")
-          ,?,?)
+          ,?,?,"Common")
         """
         result2=db.execute(sql_create_item_details,[self.id,self.price,self.level])
         self.update_location()

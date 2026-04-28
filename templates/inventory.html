@@ -16,20 +16,101 @@
 </div>
 {%endif%}
 
-{% for item in items %}
+
         <div>
-            <form action="/drop" method="post" >
-                <b>{{ item.item_name }}</b>
-                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                <input type="submit" value="drop" onclick="return confirm('You will lose this item forever, are you sure?')" />
-            </form>
-            {%if not session.location%}
-            <form action="/sell" method="get">
-                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                <input type="submit" value="sell"/>
-            </form>
-            {%endif%}
+            <table>
+                <tr>
+                    <th>Item name</th>
+                    <th>Item type</th>
+                    <th>Item level</th>
+                    <th>Item rarity</th>
+                    <th>Item stats</th>
+                    <th>Item slot</th>
+                    <th>Trader price</th>
+                </tr>
+                {% for item in items %}
+
+                <tr class="{{item.rarity}}">
+                    <td>{{item.item_name}}</td>
+                    <td>{{item.type}}</td>
+                    <td>{{item.item_level}}</td>
+                    <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
+                    <td>
+                        <ul>
+                            {%if item.magic%}
+                            <li>
+                                Magic: {{item.magic}}
+                            </li>
+                            {%endif%}
+                            {%if item.agility%}
+                            <li>
+                                
+                                Agility: {{item.agility}}
+            
+                            </li>
+                            {%endif%}
+
+                            {%if item.strength%}
+                            <li>
+                                
+                                Strength: {{item.strength}}
+            
+                            </li>
+                            {%endif%}
+                            {%if item.stamina%}
+                            <li>
+                                Stamina: {{item.stamina}}
+                            </li>
+                            {%endif%}
+                            {%if item.armor%}
+                            <li>
+                                
+                                Armor: {{item.armor}}
+            
+                            </li>
+                            {%endif%}
+                        </ul>
+                        {%if item.slot=="Weapon"%}
+                        <ul>
+                            <li>
+                                Damage: {{item.min_damage}}-{{item.max_damage}}
+                            </li>
+                            <li>
+                                Speed: {{item.weapon_speed}}
+                            </li>
+                            <li>
+                                Damage styles: {{item.damage_style}} {%if item.secondary_style%}/ {{item.secondary_style}} {%endif%}
+                            </li>
+                        </ul>
+                        {%endif%}
+
+                    </td>
+                    <td>{{item.slot}}</td>
+                    <td>{{item.trader_price}}</td>
+                    <td>
+                        <form action="/use" method="post" >
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            <input type="hidden" name="item_slot" value="{{item.slot}}"/>
+                            <input type="submit" value="Use" />
+                        </form>
+                        <form action="/drop" method="post" >
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            <input type="submit" value="Drop" onclick="return confirm('You will lose this item forever, are you sure?')" />
+                        </form>
+                        {%if not session.location%}
+                        <form action="/sell" method="get">
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            <input type="submit" value="Sell"/>
+                        </form>
+                        {%endif%}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            
         </div>
-{% endfor %}
+
 {% endblock %}

@@ -12,39 +12,113 @@
     <input type="submit" value="Search"/>
 </form>
 
-{% for item in items %}
-        <p>
-            <b>{{ item.item_name }} </b>
-            {%if item.username!=session.username%}
-            <form action="/buy" method="post" >
-                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                <input type="hidden" name="seller" value="{{item.username}}"/>
-                <input type="submit" value="Buy" onclick="return confirm('Buy {{item.item_name}} for {{item.marketplace_price}}?')" />
-            </form>
-            {%else%}
-                (Your listing)
-                <form action="/cancel" method="post" >
-                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                    <input type="hidden" name="item_id" value="{{item.id}}"/>
-                    <input type="submit" value="Cancel" onclick="return confirm('Cancel the listing for {{item.item_name}} ?')" />
-                </form>
-                <form action="/modify" method="get" >
-                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                    <input type="hidden" name="item_id" value="{{item.id}}"/>
-                    <input type="submit" value="Modify" />
-                </form>
-            {%endif%}
-            <form action="/offer_trade" method="get">
-                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                {%if item.username!=session.username%}
-                <input type="submit" value="Offer a trade"/>
-                {%else%}
-                <input type="submit" value="See offers"/>
-                {%endif%}
-            </form>
-            <div>Attributes:</div>
-            <div>Price: {{item.marketplace_price}}</div>
-        </p>
-{% endfor %}
+
+    <table>
+                <tr>
+                    <th>Item name</th>
+                    <th>Marketplace price</th>
+                    <th>Item type</th>
+                    <th>Item level</th>
+                    <th>Item rarity</th>
+                    <th>Item stats</th>
+                    <th>Item slot</th>
+                    <th>Trader price</th>
+                </tr>
+                {% for item in items %}
+
+                <tr class="{{item.rarity}}">
+                    <td>{{item.item_name}}</td>
+                    <td>{{item.marketplace_price}}</td>
+                    <td>{{item.type}}</td>
+                    <td>{{item.item_level}}</td>
+                    <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
+                    <td>
+                        <ul>
+                            {%if item.magic%}
+                            <li>
+                                Magic: {{item.magic}}
+                            </li>
+                            {%endif%}
+                            {%if item.agility%}
+                            <li>
+                                
+                                Agility: {{item.agility}}
+            
+                            </li>
+                            {%endif%}
+
+                            {%if item.strength%}
+                            <li>
+                                
+                                Strength: {{item.strength}}
+            
+                            </li>
+                            {%endif%}
+                            {%if item.stamina%}
+                            <li>
+                                Stamina: {{item.stamina}}
+                            </li>
+                            {%endif%}
+                            {%if item.armor%}
+                            <li>
+                                
+                                Armor: {{item.armor}}
+            
+                            </li>
+                            {%endif%}
+                        </ul>
+                        {%if item.slot=="Weapon"%}
+                        <ul>
+                            <li>
+                                Damage: {{item.min_damage}}-{{item.max_damage}}
+                            </li>
+                            <li>
+                                Speed: {{item.weapon_speed}}
+                            </li>
+                            <li>
+                                Damage styles: {{item.damage_style}} {%if item.secondary_style%}/ {{item.secondary_style}} {%endif%}
+                            </li>
+                        </ul>
+                        {%endif%}
+
+                    </td>
+                    <td>{{item.slot}}</td>
+                    <td>{{item.trader_price}}</td>
+                    <td>
+                        {%if item.username!=session.username%}
+                        <form action="/buy" method="post" >
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            <input type="hidden" name="seller" value="{{item.username}}"/>
+                            <input type="submit" value="Buy" onclick="return confirm('Buy {{item.item_name}} for {{item.marketplace_price}}?')" />
+                        </form>
+                        {%else%}
+                            (Your listing)
+                            <form action="/cancel" method="post" >
+                                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                                <input type="submit" value="Cancel" onclick="return confirm('Cancel the listing for {{item.item_name}} ?')" />
+                            </form>
+                            <form action="/modify" method="get" >
+                                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                                <input type="submit" value="Modify" />
+                            </form>
+                        {%endif%}
+                        <form action="/offer_trade" method="get">
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            {%if item.username!=session.username%}
+                            <input type="submit" value="Offer a trade"/>
+                            {%else%}
+                            <input type="submit" value="See offers"/>
+                            {%endif%}
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            
+        
+
 {% endblock %}

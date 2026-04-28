@@ -37,7 +37,7 @@ table {
 }
 
 td, th {
-  border: 1px solid #000000;
+  border: 2px solid #000000;
   text-align: left;
   padding: 8px;
 }
@@ -88,4 +88,63 @@ div.chest{
     padding-right: 50px;
     padding-top: 20px;
     padding-bottom: 20px;
+}
+
+div.Legendary{
+  
+  color: #ff8000;
+  font-weight: bold;
+}
+div.Epic{
+  
+  color: #a335ee;
+  font-weight: bold;
+}
+div.Rare{
+  
+  color: #0070dd;
+  font-weight: bold;
+}
+div.Uncommon{
+  
+  
+  color: #1eff00;
+  font-weight: bold;
+}
+div.Common{
+  
+  color: #9d9d9d;
+  font-weight: bold;
+}
+
+
+tr.Legendary{
+
+
+  box-shadow: 0 0 40px 15px #ff8000 inset;
+
+}
+tr.Epic{
+
+
+  box-shadow: 0 0 40px 15px #a335ee inset; 
+
+}
+tr.Rare{
+
+
+  box-shadow: 0 0 40px 15px #0070dd inset;
+
+}
+tr.Uncommon{
+
+
+  box-shadow: 0 0 40px 15px #1eff00 inset;
+
+}
+tr.Common{
+
+
+  box-shadow: 0 0 40px 15px #9d9d9d inset;
+
 }

@@ -46,10 +46,15 @@ def check_balance(item_id,username):
 def get_listed_items(query):
     if not query:
         query=""
-    sql="""SELECT items.id,items.item_name,items.player,marketplace_listings.marketplace_price,users.username 
+    sql="""SELECT items.id,items.item_name,items.player,marketplace_listings.marketplace_price,users.username,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
     FROM marketplace_listings
     LEFT JOIN items ON marketplace_listings.item_id=items.id
     LEFT JOIN users on marketplace_listings.seller_id=users.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
     WHERE marketplace_listings.seller_id=users.id
     AND items.item_name LIKE ?
     """
