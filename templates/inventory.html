@@ -1,14 +1,507 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Inventory{% endblock %}
         
 {% block content %}
 
 {%if previous_page and "/inventory" not in previous_page and "/sell" not in previous_page%}
-<a href="{{previous_page}}">&lt;&lt;</a>
+<div><a href="{{previous_page}}">&lt;&lt;</a></div>
 {%else%}
-<a href="/">&lt;&lt;</a>
+<div><a href="/">&lt;&lt;</a></div>
 {%endif%}
+<div class="stat_sheet">
+    <h2>Total Stats</h2>
+    <ul>
+        <li>Agility: {{stats.agility}}</li>
+        <li>Magic: {{stats.magic}}</li>
+        <li>Stamina: {{stats.stamina}}</li>
+        <li>Strength: {{stats.strength}}</li>
+        <li>Armor: {{stats.armor}}</li>
+    </ul>
+    <div>
+        {%for worn_item in worn_items%}
+        {%if worn_item.slot=="Weapon"%}
+        <h2>Weapon Stats</h2>
+        <h3>Primary attack</h3>
+        <h4>{{worn_item.damage_style}}</h4>
+        <ul>
+            <li>
+                {%if worn_item.damage_style in ("Stab","Crush","Slash")%}
+                Physical Damage: {{(worn_item.min_damage*stats.physical_modifier//1)|int}}-{{(worn_item.max_damage*stats.physical_modifier//1)|int}}
+                {%else%}
+                Magical Damage: {{(worn_item.min_damage*stats.magical_modifier//1)|int}}-{{(worn_item.max_damage*stats.magical_modifier//1)|int}}
+                {%endif%}
+            </li>
+            <li>
+                Speed: {{worn_item.weapon_speed}}
+            </li>
+        </ul>
+        
+        {%if worn_item.secondary_style%} 
+        <h3>Secondary attack</h3>
+        <h4>{{worn_item.secondary_style}}</h4>
+        <ul>
+            <li>
+                {%if worn_item.secondary_style in ("Stab","Crush","Slash")%}
+                Physical Damage: {{(worn_item.min_damage*stats.physical_modifier*0.7//1)|int}}-{{(worn_item.max_damage*stats.physical_modifier*0.7//1)|int}}
+                {%else%}
+                Magical Damage: {{(worn_item.min_damage*stats.magical_modifier*0.7//1)|int}}-{{(worn_item.max_damage*stats.magical_modifier*0.7//1)|int}}
+                {%endif%}
+            </li>
+            <li>
+                Speed: {{worn_item.weapon_speed}}
+            </li>
+        </ul>
+        {%endif%}
+            
+        
+        {%endif%}
+        {%endfor%}
+    </div>
+</div>
+<table class="character">
+    <tr>
+        <td class="empty">
+        </td>
+        <td class="equip">
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Head"%}
+            <div class="equipment">Head
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    Agility: {{worn_item.agility}}              
+                                </li>
+                                {%endif%}
+                                {%if worn_item.strength%}
+                                <li>
+
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+                    </tr>
+                    </table>
+                 </span>
+            
+            {%endif%}
+            {%endfor%}
+        </td>
+        <td class="empty">
+            
+        </td>
+    </tr>
+    <tr>
+        <td class="equip" colspan="3">
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Shoulders"%}
+                <div class="equipment">Shoulders
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    
+                                    Agility: {{worn_item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if worn_item.strength%}
+                                <li>
+                                    
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+                    </tr>
+                    </table>
+                 </span>
+            {%endif%}
+            {%endfor%}
+
+            
+        </td>
+    </tr>
+    <tr>
+        <td class="equip">
+            
+        </td>
+        <td class="equip" rowspan="2">
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Chest"%}
+            <div class="equipment">Chest
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    
+                                    Agility: {{worn_item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if worn_item.strength%}
+                                <li>
+                                    
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+                    </tr>
+                    </table>
+                 </span>
+            {%endif%}
+            {%endfor%}
+            
+        </td>
+        <td class="equip">
+            
+        </td>
+    </tr>
+
+    <tr>
+        <td class="equip">
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Weapon"%}
+            <div class="equipment">Weapon
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    
+                                    Agility: {{worn_item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if worn_item.strength%}
+                                <li>
+                                    
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+                        <td>
+                        {%if worn_item.slot=="Weapon"%}
+                        <ul>
+                            <li>
+                                Damage: {{worn_item.min_damage}}-{{worn_item.max_damage}}
+                            </li>
+                            <li>
+                                Speed: {{worn_item.weapon_speed}}
+                            </li>
+                            <li>
+                                Damage styles: {{worn_item.damage_style}} {%if worn_item.secondary_style%}/ {{worn_item.secondary_style}} {%endif%}
+                            </li>
+                        </ul>
+                        {%endif%}
+                        </td>
+
+                    </tr>
+                    </table>
+                 </span>
+            {%endif%}
+            {%endfor%}
+            
+        </td>
+        <td class="equip">
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Hands"%}
+            <div class="equipment">Hands
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    
+                                    Agility: {{worn_item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if worn_item.strength%}
+                                <li>
+                                    
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+                    </tr>
+                    </table>
+                 </span>
+            {%endif%}
+            {%endfor%}
+        </td>
+    </tr>
+
+    <tr>
+        <td class="empty">
+            
+        </td>
+        <td class="equip" rowspan="2">
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Legs"%}
+            <div class="equipment">Legs
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    
+                                    Agility: {{worn_item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if worn_item.strength%}
+                                <li>
+                                    
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+
+                    </tr>
+                    </table>
+                 </span>
+            {%endif%}
+            {%endfor%}
+            
+        </td>
+        <td class="empty">
+            
+        </td>
+    </tr>
+    <tr>
+        <td class="empty">
+            
+        </td>
+        <td class="empty">
+            
+        </td>
+
+    </tr>
+    <tr>
+        <td class="equip" colspan="3" >
+            {%for worn_item in worn_items%}
+            {%if worn_item.slot=="Feet"%}
+            <div class="equipment">Feet
+                 <span class="equipment_info">
+                    <table>
+                    <tr class="{{worn_item.rarity}}">
+                        <td>{{worn_item.item_name}}</td>
+                        <td>{{worn_item.type}}</td>
+                        <td>Level: {{worn_item.item_level}}</td>
+                        <td><div class="{{worn_item.rarity}}">{{worn_item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if worn_item.magic%}
+                                <li>
+                                    Magic: {{worn_item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.agility%}
+                                <li>
+                                    
+                                    Agility: {{worn_item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if worn_item.strength%}
+                                <li>
+                                    
+                                    Strength: {{worn_item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if worn_item.stamina%}
+                                <li>
+                                    Stamina: {{worn_item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if worn_item.armor%}
+                                <li>
+                                    
+                                    Armor: {{worn_item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+
+                    </tr>
+                    </table>
+                 </span>
+            {%endif%}
+            {%endfor%}
+            
+        </td>
+
+    </tr>
+</table>
 
 {%if not items%}
 <div>

@@ -4,6 +4,7 @@ username TEXT UNIQUE,
 password_hash TEXT,
 set_stats BOOLEAN DEFAULT FALSE,
 health INTEGER DEFAULT 100,
+max_health INTEGER DEFAULT 100,
 gold INTEGER DEFAULT 0 NOT NULL,
 CHECK (gold >= 0),
 CHECK (health >= 0));
@@ -67,15 +68,22 @@ id INTEGER PRIMARY KEY,
 npc_name TEXT,
 tile INTEGER,
 npc_type_id INTEGER,
+health INTEGER DEFAULT 100,
+max_health INTEGER DEFAULT 100,
+alive BOOLEAN DEFAULT TRUE,
+gold INTEGER DEFAULT 0 NOT NULL,
 FOREIGN KEY (tile) REFERENCES tiles(id) ON DELETE CASCADE,
-FOREIGN KEY (npc_type_id) REFERENCES npc_types(id)
+FOREIGN KEY (npc_type_id) REFERENCES npc_types(id),
+CHECK (gold >= 0)
 );
 
 CREATE TABLE containers (
 id INTEGER PRIMARY KEY,
 container_type TEXT,
+gold INTEGER DEFAULT 0 NOT NULL,
 tile INTEGER,
-FOREIGN KEY (tile) REFERENCES tiles(id) ON DELETE CASCADE
+FOREIGN KEY (tile) REFERENCES tiles(id) ON DELETE CASCADE,
+CHECK (gold >= 0)
 );
 
 CREATE TABLE item_categories (

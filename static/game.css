@@ -1,6 +1,7 @@
 *{
   font-family: 'EB Garamond';
   font-size: 23px;
+  margin: 5px;
 }
 
 .tooltip {
@@ -28,18 +29,71 @@
   visibility: visible;
 }
 
+.equipment {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+  cursor: pointer;
+}
+
+.equipment_info {
+  background-color: rgb(255, 255, 255);
+  visibility: hidden;
+  text-align: center;
+  position: absolute;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.equipment:hover .equipment_info {
+  visibility: visible;
+}
+
 h2{
   font-size: 30px;
 }
 table {
   border-collapse: collapse;
-  width: 70%;
+  
 }
 
 td, th {
   border: 2px solid #000000;
   text-align: left;
   padding: 8px;
+  
+}
+
+table.character{
+  position: relative;
+  margin: 20px;
+  
+}
+
+div.stat_menu{
+  margin: 20px;
+  float: left;
+}
+
+div.stat_sheet{
+  margin: 20px;
+  float: left;
+  border: #000000;
+}
+
+td.equip{
+  border: 2px solid #000000;
+  text-align: center;
+  height: 70px;
+  width: 70px;
+  border-radius: 10px;
+}
+
+td.empty{
+  border: none;
+  text-align: center;
+  height: 70px;
+  width: 70px;
 }
 
 div.nav {

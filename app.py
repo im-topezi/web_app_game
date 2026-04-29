@@ -97,7 +97,9 @@ def logout():
 @login_required
 def inventory():
     items=player.get_player_items(session["username"])
-    return render_template("inventory.html",items=items,previous_page=request.referrer if request.referrer else "")
+    worn_items=player.get_equipped_items(session["username"])
+    stats=player.get_total_stats(session["username"])
+    return render_template("inventory.html",items=items,worn_items=worn_items,stats=stats,previous_page=request.referrer if request.referrer else "")
 
 #Add checks that you're in the same tile
 @app.route("/loot",methods=["POST","GET"])
@@ -167,7 +169,7 @@ def sell():
             if result["rows_affected"]==1:
                 flash(f"{item[0]['item_name']} has been listed to the marketplace")
             else:
-                flash("error")
+                flash("Item no longer available")
                 print(result["error"])
             return redirect("/inventory")
         else:
@@ -312,6 +314,14 @@ def delete_world():
 
     return redirect("/")
 
+@app.route("/use",methods=["POST"])
+@login_required
+def use_items():
+    check_csrf()
+    item_id=request.form["item_id"]
+    result=player.use_item(item_id,session["username"])
+    flash(result)
+    return redirect("/inventory")
 
 @app.route("/play", methods=["POST","GET"])
 @login_required
@@ -364,8 +374,10 @@ def leave():
 def player_page(username):
     info=player.get_player_info(username)
     items=player.get_player_items(username)
+    worn_items=player.get_equipped_items(username)
+    stats=player.get_total_stats(username)
     if info:
-        return render_template("player_page.html",items=items,info=info)
+        return render_template("player_page.html",items=items,stats=stats,info=info,worn_items=worn_items)
     else:
         abort(404)
 

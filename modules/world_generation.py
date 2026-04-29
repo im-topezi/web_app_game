@@ -192,7 +192,7 @@ class NPC:
 
     def generate_items(self,world_level):
         stats=world_level
-        if self.type["npc_type"]==("Human" or "Skeleton"):
+        if self.type["npc_type"] in ("Human","Skeleton"):
             
             sql_get_slots="""
             SELECT slot_name
@@ -226,7 +226,7 @@ class NPC:
             WHERE slot_name=?))
             """
             result=db.execute(sql,[self.id,item.id,item.slot])
-            print(result)
+
 
     def generate_npc_type(self,biome):
         sql="""
@@ -396,7 +396,7 @@ class Item:
             self.rarity="Uncommon"
         else:
             self.rarity="Common"
-        print(self.rarity)
+
         
     def generate_a_random_item(self):
         sql_get_categories="""
@@ -419,8 +419,9 @@ class Item:
             return (speed,base_dmg,max_dmg)
         
         def allocate_stats(weapon_type,stat_amount):
+            print(weapon_type)
 
-            if weapon_type==("Dagger" or "Sword"):
+            if weapon_type in ("Dagger","Sword"):
                 stats={
                     "agility":0,
                     "stamina":0,
@@ -434,7 +435,7 @@ class Item:
                         stats["agility"]+=1
                     else:
                         stats["stamina"]+=1
-            if weapon_type==("Wand" or "Staff"):
+            elif weapon_type in ("Wand","Staff"):
                 stats={
                     "agility":0,
                     "stamina":0,

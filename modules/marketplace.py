@@ -177,6 +177,13 @@ def check_item_not_in_offer(item_id):
     """
     result=db.query(sql,[item_id])
 
+def check_item_is_not_worn(item_id):
+    sql="""
+    SELECT item_id
+    FROM equipped_items
+    WHERE item_id=?
+    """
+    result=db.query(sql,[item_id])
 
 def create_trade_offer(item_id,item_offers,buyer_username,gold_offer=0):
     if check_item_not_in_offer(item_id):
@@ -195,22 +202,20 @@ def create_trade_offer(item_id,item_offers,buyer_username,gold_offer=0):
         WHERE id=?
         """
         db_changes=db.execute([sql_create_offer,sql_reduce_gold],[[item_id,buyer_id,gold_offer],[gold_offer,buyer_id]])
-        print(db_changes)
         if sqlite3.IntegrityError==type(db_changes["error"]):
             if str(db_changes["error"])=="CHECK constraint failed: gold >= 0":
                 return "You don't have enough gold"
         elif db_changes["error"]:
-            print("Here")
             return db_changes["error"]
         elif db_changes["rows_affected"]==2:
             offer_id=db_changes["rows"][0][0]["id"]
             for item in item_offers:
-                if check_item_owner(item,buyer_username):
+                if check_item_owner(item,buyer_username) and not check_item_is_not_worn(item) and not check_item_not_in_offer(item):
                     sql_offer_item="""
                     INSERT INTO offered_items (offer_id,item_id)
                     VALUES (?,?)
                     """
-                    print(db.execute(sql_offer_item,[offer_id,item]))
+                    db.execute(sql_offer_item,[offer_id,item])
             return "Trade offer created"
     else:
         return "You must offer gold or items"
@@ -247,7 +252,9 @@ def get_offers_for_me(username):
 def get_offers_for_item(item_id):
     offers=[]
     sql="""
-    SELECT trade_offers.id,sold_item,player,username,buyer_id,gold_offer,items.item_name
+    SELECT trade_offers.id,sold_item,player,buyer_id,gold_offer,items.item_name,(SELECT username
+    FROM users
+    WHERE id=trade_offers.buyer_id) AS buyer_name
     FROM trade_offers
     LEFT JOIN items ON items.id=trade_offers.sold_item
     LEFT JOIN users ON items.player=users.id
@@ -255,7 +262,7 @@ def get_offers_for_item(item_id):
     """
     my_offers=db.query(sql,[item_id])
     for offer in my_offers:
-        offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],offer["username"]))
+        offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],offer["buyer_name"]))
     return offers
 
 def modify_listing(item_id,username,new_price):
@@ -287,9 +294,7 @@ def cancel_offer(offer_id,username):
     WHERE id=? AND buyer_id=?
     """
     result=db.execute([return_gold_sql,delete_sql],[[offer_id,buyer_id,buyer_id],[offer_id,buyer_id]])
-    if result["error"]:
-        print(result["error"])
-        return "Database error"
+
     if result["rows_affected"]>0:
         return "Offer removed"
     else:
@@ -301,6 +306,10 @@ def accept_offer(offer_id,username,buyer_id,item_id):
     delete_marketplace_listing_sql="""
     DELETE FROM marketplace_listings
     WHERE item_id=? AND seller_id=?
+    """
+    delete_equipped_sql="""
+    DELETE FROM equipped_items
+    WHERE item_id=? AND player_id=?
     """
     transfer_offered_items_sql="""
     UPDATE items
@@ -353,12 +362,13 @@ def accept_offer(offer_id,username,buyer_id,item_id):
     """
 
     delete_marketplace_listing_parameters=[item_id,seller_id]
+    delete_equipped_parameters=[item_id,seller_id]
     tranfer_offered_items_parameters=[seller_id,offer_id,buyer_id,item_id,seller_id]
     transfer_offered_money_parameters=[offer_id,item_id,seller_id,item_id,seller_id]
     transfer_sold_item_parameters=[buyer_id,item_id,seller_id,offer_id,buyer_id,item_id]
     delete_trade_offer_parameters=[offer_id,buyer_id,buyer_id,item_id]
-    parameters=[delete_marketplace_listing_parameters,tranfer_offered_items_parameters,transfer_offered_money_parameters,transfer_sold_item_parameters,delete_trade_offer_parameters]
-    sqls=[delete_marketplace_listing_sql,transfer_offered_items_sql,transfer_offered_money,transfer_sold_item_sql,delete_trade_offer_sql]
+    parameters=[delete_marketplace_listing_parameters,delete_equipped_parameters,tranfer_offered_items_parameters,transfer_offered_money_parameters,transfer_sold_item_parameters,delete_trade_offer_parameters]
+    sqls=[delete_marketplace_listing_sql,delete_equipped_sql,transfer_offered_items_sql,transfer_offered_money,transfer_sold_item_sql,delete_trade_offer_sql]
 
     result=db.execute(sqls,parameters)
 

@@ -1,6 +1,92 @@
 import sqlite3
 import modules.db as db
 
+def get_equipped_items(username):
+    sql="""
+    SELECT items.id,items.player,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
+    FROM equipped_items 
+    LEFT JOIN items ON equipped_items.item_id=items.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
+    WHERE equipped_items.player_id=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    """
+    items=db.query(sql,[username])
+    return items
+
+def get_total_stats(username):
+    sql_get_player_stat_sheet="""
+    SELECT agility,stamina,strength,magic
+    FROM stat_sheet
+    WHERE player_id=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    """
+    player_stats=db.query(sql_get_player_stat_sheet,[username])[0]
+    sql_item_stats="""
+    SELECT IFNULL(SUM(stat_sheet.agility),0) AS agility,
+    IFNULL(SUM(stat_sheet.stamina),0) AS stamina,
+    IFNULL(SUM(stat_sheet.strength),0) AS strength,
+    IFNULL(SUM(stat_sheet.magic),0) AS magic,
+    IFNULL(SUM(stat_sheet.armor),0) AS armor
+    FROM equipped_items
+    LEFT JOIN stat_sheet ON equipped_items.item_id=stat_sheet.item_id
+    WHERE equipped_items.player_id=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    AND stat_sheet.id IS NOT NULL
+    """
+    item_stats=db.query(sql_item_stats,[username])
+    sql_heavy_items="""
+    SELECT COUNT(equipped_items.item_id) AS item_count
+    FROM equipped_items
+    LEFT JOIN item_details ON equipped_items.item_id=item_details.item_id
+    WHERE equipped_items.player_id=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    AND item_type IN (SELECT id
+    FROM item_subcategories
+    WHERE subcategory_name IN ("Metal Armor","Mace","Axe"))
+    """
+    heavy_items=db.query(sql_heavy_items,[username])
+    sql_weapon_details="""
+    SELECT (SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style,min_damage,max_damage,weapon_speed
+    FROM weapon_details
+    WHERE weapon_details.item_id=(SELECT equipped_items.item_id
+    FROM equipped_items
+    WHERE equipped_items.slot=(SELECT id
+    FROM item_slots
+    WHERE slot_name="Weapon")
+    AND equipped_items.player_id=(SELECT id 
+    FROM users 
+    WHERE username=?))
+    """
+    stats={
+        "agility":player_stats["agility"]+item_stats[0]["agility"],
+        "magic":player_stats["magic"]+item_stats[0]["magic"],
+        "stamina":player_stats["stamina"]+item_stats[0]["stamina"],
+        "strength":player_stats["strength"]+item_stats[0]["strength"],
+        "armor":item_stats[0]["armor"],
+        "speed_modifier":1,
+        "physical_modifier":1,
+        "magical_modifier":1
+    }
+    stats["physical_modifier"]+=(stats["strength"]/1000)
+    stats["magical_modifier"]+=(stats["magic"]/1000)
+
+
+    if heavy_items[0]["item_count"]>0:
+        total_stats=stats["agility"]+stats["magic"]+stats["stamina"]+stats["strength"]
+        strength_modifier=stats["strength"]/total_stats*10
+        heavy_items=heavy_items[0]["item_count"]
+        if strength_modifier<heavy_items:
+            stats["speed_modifier"]+=heavy_items-strength_modifier
+    return stats
+    
 
 def get_player_items(username):
     sql="""
@@ -109,3 +195,63 @@ def set_stats(username,agility,magic,stamina,strength,total_stats):
         return "Stats updated"
     else:
         return "All skillpoints have already been spent"
+    
+def drink_health_potion(item_id):
+    pass
+    
+
+def use_item(item_id,username):
+    sql="""
+    SELECT items.id,items.player,items.item_name,item_slots.slot_name AS slot
+    FROM items 
+    LEFT JOIN marketplace_listings ON marketplace_listings.item_id=items.id
+    LEFT JOIN offered_items ON offered_items.item_id=items.id
+    LEFT JOIN equipped_items ON equipped_items.item_id=items.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    WHERE player=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    AND items.id=?
+    AND marketplace_listings.item_id IS NULL
+    AND offered_items.item_id IS NULL
+    AND equipped_items.item_id IS NULL
+    """
+    result=db.query(sql,[username,item_id])
+    if result:
+        item=result[0]
+        if item["item_name"]=="Health Potion":
+            drink_health_potion(item_id)
+        elif item["slot"]:
+            sql_get_slot_information="""
+            SELECT item_id
+            FROM equipped_items
+            WHERE player_id=?
+            AND slot=(SELECT id
+            FROM item_slots
+            WHERE slot_name=?)
+            """
+            slot_result=db.query(sql_get_slot_information,[item["player"],item["slot"]])
+            if slot_result:
+                sql_update_slot="""
+                UPDATE equipped_items
+                SET item_id=?
+                WHERE player_id=?
+                AND slot=(SELECT id
+                FROM item_slots
+                WHERE slot_name=?)
+                """
+                update_result=db.execute(sql_update_slot,[item_id,item["player"],item["slot"]])
+                print(update_result)
+            else:
+                sql_insert_slot="""
+                INSERT INTO equipped_items (item_id,player_id,slot)
+                VALUES (?,?,(SELECT id
+                FROM item_slots
+                WHERE slot_name=?))
+                """
+                insert_result=db.execute(sql_insert_slot,[item_id,item["player"],item["slot"]])
+                print(insert_result)
+            return f"{item['item_name']} equipped"
+    else:
+        return "Item not available"

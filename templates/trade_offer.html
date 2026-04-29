@@ -42,9 +42,9 @@
     <th>Items</th>
     <th>User</th>
   </tr>
-  <tr>
+  
 {% for offer in offers %}
-        
+<tr>
             
     
     <td>
@@ -65,10 +65,10 @@
     <td>
         {{offer.buyer_name}}
     </td>
-
+</tr>
 {% endfor %}
 
-    </tr>
+    
 </table>
 {%else%}
 <ul>No offers for this item</ul>
