@@ -400,3 +400,32 @@ def set_stats():
     result=player.set_stats(session["username"],agility,magic,stamina,strength,stats)
     flash(result)
     return redirect(request.referrer)
+
+
+@app.route("/combat",methods=["POST","GET"])
+@login_required
+def combat():
+    if request.method=="POST":
+        if player.check_if_in_combat(session["username"]):
+            return redirect("/combat")
+        else:
+            npc_id=request.form["npc_id"]
+            if game.check_npc_is_alive(npc_id) and game.check_npc_location(npc_id,session["username"]):
+                game.create_combat_encounter(npc_id,session["username"])
+                return redirect("/combat")
+            else:
+                flash("You can't attack that")
+                return redirect("/")
+
+    if request.method=="GET":
+        result=player.check_if_in_combat(session["username"])
+        if result:
+            npc_id=result[0][npc_id]
+            player_stats=player.get_total_stats(session["username"])
+            player_items=player.get_equipped_items(session["username"])
+            npc_stats=game.get_npc_stats(npc_id)
+            npc_items=game.get_npc_items(npc_id)
+
+        else:
+            flash("You are not in combat")
+            return redirect("/")

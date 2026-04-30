@@ -48,9 +48,13 @@
 {%endif%}
 
 {% for npc in npcs %}
-        <p>
+        <form action="/fight" method="post">
             <b>{{ npc.npc_name }}</b>
-        </p>
+            <input type="hidden" value="{{npc.id}}"/>
+            <input type="submit" value="Fight!"/>
+        </form>
+            
+        
 {% endfor %}
 {% for container in containers %}
         <div style="position: fixed;

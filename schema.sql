@@ -266,6 +266,20 @@ CREATE TABLE armor_multipliers (
     FOREIGN KEY (armor_slot) REFERENCES item_slots(slot_name)
 );
 
+CREATE TABLE combat_log(
+id INTEGER PRIMARY KEY,
+player_id INTEGER,
+npc_id INTEGER,
+combat_action TEXT,
+damage INTEGER,
+damage_style INTEGER,
+player_swing_timer FLOAT,
+npc_swing_timer FLOAT,
+FOREIGN KEY (damage_style) REFERENCES damage_styles(id),
+FOREIGN KEY (player_id) REFERENCES users(id),
+FOREIGN KEY (npc_id) REFERENCES npcs(id) ON DELETE CASCADE
+);
+
 
 
 
