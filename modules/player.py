@@ -1,6 +1,42 @@
 import sqlite3
 import modules.db as db
 
+def get_health_amount(username):
+    sql="""
+    SELECT health,max_health
+    FROM users
+    WHERE username=?
+    """
+    result=db.query(sql,[username])[0]
+    health={
+        "current":result["health"],
+        "max":result["max_health"]
+    }
+    return health
+
+def update_max_health(username):
+    old_health=get_health_amount(username)
+    stats=get_total_stats(username)
+    max_health=100+(stats["stamina"]*10)
+    if old_health["current"]==old_health["max"]:
+        sql="""
+        UPDATE users
+        SET max_health=?,health=?
+        WHERE username=?
+        """
+        health=max_health
+    else:
+        sql="""
+        UPDATE users
+        SET max_health=?,health=?
+        WHERE username=?
+        """
+        health=old_health["current"]
+
+
+
+    db.execute(sql,[max_health,health,username])
+
 def get_equipped_items(username):
     sql="""
     SELECT items.id,items.player,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
@@ -53,18 +89,6 @@ def get_total_stats(username):
     WHERE subcategory_name IN ("Metal Armor","Mace","Axe"))
     """
     heavy_items=db.query(sql_heavy_items,[username])
-    sql_weapon_details="""
-    SELECT (SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style,min_damage,max_damage,weapon_speed
-    FROM weapon_details
-    WHERE weapon_details.item_id=(SELECT equipped_items.item_id
-    FROM equipped_items
-    WHERE equipped_items.slot=(SELECT id
-    FROM item_slots
-    WHERE slot_name="Weapon")
-    AND equipped_items.player_id=(SELECT id 
-    FROM users 
-    WHERE username=?))
-    """
     stats={
         "agility":player_stats["agility"]+item_stats[0]["agility"],
         "magic":player_stats["magic"]+item_stats[0]["magic"],
@@ -255,3 +279,19 @@ def use_item(item_id,username):
             return f"{item['item_name']} equipped"
     else:
         return "Item not available"
+
+
+def check_if_in_combat(username):
+    sql="""
+    SELECT npc_id,combat_action,damage,style,player_swing_timer,npc_swing_timer,damage_type
+    FROM combat_log
+    LEFT JOIN damage_styles ON damage_style=damage_styles.id
+    LEFT JOIN damage_types ON damage_styles.type_id=damage_types.id
+    WHERE player_id=(
+    SELECT id
+    FROM users
+    WHERE username=?)
+    ORDER BY combat_log.id
+    """
+    result=db.query(sql,[username])
+    return result

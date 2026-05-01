@@ -1,4 +1,5 @@
 import modules.db as db
+import modules.game as game
 import random,secrets,sqlite3
 
 class World:
@@ -131,6 +132,8 @@ class Tile:
         for npc in self.npcs:
             npc.generate_items(self.world.difficulty)
             npc.equip_items()
+            npc.create_stat_sheet(self.world.difficulty)
+            npc.set_max_health()
 
     def save_tile_to_database(self):
         sql="""
@@ -189,6 +192,50 @@ class NPC:
         self.save_npc_to_database()
         self.items=[]
 
+    def create_stat_sheet(self,stat_amount):
+        stats={
+            "agility":0,
+            "stamina":0,
+            "strength":0,
+            "magic":0,
+            "armor":0
+        }
+        if self.type["npc_type"] in ("Bear","Alligator"):
+            stats["armor"]=stat_amount*3
+            for i in range(stat_amount):
+                random_value=random.randint(1,100)
+                if random_value>90:
+                    stats["agility"]+=1
+                elif random_value>45:
+                    stats["strength"]+=1
+                else:
+                    stats["stamina"]+=1
+        elif self.type["npc_type"]=="Dragon":
+            stats["armor"]=stat_amount*10
+            for i in range(stat_amount*2):
+                random_value=random.randint(1,100)
+                if random_value>90:
+                    stats["agility"]+=1
+                elif random_value>45:
+                    stats["magic"]+=1
+                    stats["strength"]+=1
+                else:
+                    stats["stamina"]+=1
+        sql="""
+        INSERT INTO stat_sheet (stamina,strength,agility,magic,armor,npc_id)
+        VALUES (?,?,?,?,?,?)
+        """
+        db.execute(sql,[stats["stamina"],stats["strength"],stats["agility"],stats["magic"],stats["armor"],self.id])
+
+    def set_max_health(self):
+        stamina=game.get_npc_stats(self.id)["stamina"]
+        health=100+stamina*10
+        sql="""
+        UPDATE npcs
+        SET health=?,max_health=?
+        WHERE id=?
+        """
+        db.execute(sql,[health,health,self.id])
 
     def generate_items(self,world_level):
         stats=world_level

@@ -1,5 +1,7 @@
-import sqlite3
+import sqlite3,random
 import modules.db as db
+import modules.player as player
+import modules.combat as combat
 
 def tile_details(tile_id):
     tile={
@@ -168,3 +170,140 @@ def update_location(current_tile_id,target_tile_id,username):
         WHERE username=?)
         """
         return db.execute(update_location_sql,[target_tile_id,current_tile_id,username])
+    
+    
+
+def create_combat_encounter(npc_id,username):
+    sql="""
+    INSERT INTO combat_log (player_id,npc_id,combat_action)
+    VALUES ((SELECT id 
+        FROM users
+        WHERE username=?),?,"Combat encounter has started, select you next action")
+    """
+    result=db.execute(sql,[username,npc_id])
+    if result["error"]:
+        print(result["error"])
+
+
+def check_npc_is_alive(npc_id):
+    sql="""
+    SELECT alive
+    FROM npcs
+    WHERE id=?
+    """
+    result=db.query(sql,[npc_id])
+    if result and result[0]["alive"]:
+        return True
+    else:
+        return False
+    
+def check_npc_location(npc_id,username):
+    sql="""
+    SELECT npcs.tile=(SELECT location.tile
+    FROM location
+    WHERE player=(SELECT id 
+        FROM users
+        WHERE username=?)) AS same_tile
+    FROM npcs
+    WHERE npcs.id=?
+    """
+    result=db.query(sql,[username,npc_id])
+    if result and result[0]["same_tile"]:
+        return True
+    else:
+        return False
+    
+def get_npc_items(npc_id):
+    sql="""
+    SELECT items.id,items.npc,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
+    FROM equipped_items 
+    LEFT JOIN items ON equipped_items.item_id=items.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
+    WHERE equipped_items.npc_id=?
+    """
+    items=db.query(sql,[npc_id])
+    return items
+
+def get_npc_stats(npc_id):
+    sql_get_player_stat_sheet="""
+    SELECT agility,stamina,strength,magic
+    FROM stat_sheet
+    WHERE npc_id=?
+    """
+    player_stats=db.query(sql_get_player_stat_sheet,[npc_id])[0]
+    sql_item_stats="""
+    SELECT IFNULL(SUM(stat_sheet.agility),0) AS agility,
+    IFNULL(SUM(stat_sheet.stamina),0) AS stamina,
+    IFNULL(SUM(stat_sheet.strength),0) AS strength,
+    IFNULL(SUM(stat_sheet.magic),0) AS magic,
+    IFNULL(SUM(stat_sheet.armor),0) AS armor
+    FROM equipped_items
+    LEFT JOIN stat_sheet ON equipped_items.item_id=stat_sheet.item_id
+    WHERE equipped_items.npc_id=?
+    AND stat_sheet.id IS NOT NULL
+    """
+    item_stats=db.query(sql_item_stats,[npc_id])
+    sql_heavy_items="""
+    SELECT COUNT(equipped_items.item_id) AS item_count
+    FROM equipped_items
+    LEFT JOIN item_details ON equipped_items.item_id=item_details.item_id
+    WHERE equipped_items.npc_id=?
+    AND item_type IN (SELECT id
+    FROM item_subcategories
+    WHERE subcategory_name IN ("Metal Armor","Mace","Axe"))
+    """
+    heavy_items=db.query(sql_heavy_items,[npc_id])
+    stats={
+        "agility":player_stats["agility"]+item_stats[0]["agility"],
+        "magic":player_stats["magic"]+item_stats[0]["magic"],
+        "stamina":player_stats["stamina"]+item_stats[0]["stamina"],
+        "strength":player_stats["strength"]+item_stats[0]["strength"],
+        "armor":item_stats[0]["armor"],
+        "speed_modifier":1,
+        "physical_modifier":1,
+        "magical_modifier":1
+    }
+    stats["physical_modifier"]+=(stats["strength"]/1000)
+    stats["magical_modifier"]+=(stats["magic"]/1000)
+
+
+    if heavy_items[0]["item_count"]>0:
+        total_stats=stats["agility"]+stats["magic"]+stats["stamina"]+stats["strength"]
+        strength_modifier=stats["strength"]/total_stats*10
+        heavy_items=heavy_items[0]["item_count"]
+        if strength_modifier<heavy_items:
+            stats["speed_modifier"]+=heavy_items-strength_modifier
+    return stats
+    
+
+def combat_attack_sequence(attack,username):
+    sql_player_get_combat_log="""
+    SELECT npc_id,player_id,player_swing_timer,npc_swing_timer
+    FROM combat_log
+    WHERE player_id=(SELECT id 
+        FROM users
+        WHERE username=?)
+    ORDER BY id
+    """
+    combat_log=db.query(sql_player_get_combat_log,[username])[-1]
+    result=combat.calculate_attacks(combat_log,attack,username)
+    return result
+
+
+def combat_use_items(item_id,username):
+    player.use_item(item_id,username)
+    sql_player_get_combat_log="""
+    SELECT npc_id,player_id,player_swing_timer,npc_swing_timer
+    FROM combat_log
+    WHERE player_id=(SELECT id 
+        FROM users
+        WHERE username=?)
+    ORDER BY id
+    """
+    combat_log=db.query(sql_player_get_combat_log,[username])[-1]
+    result=combat.calculate_attacks(combat_log,"",username)
+    return result

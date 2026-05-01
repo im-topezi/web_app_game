@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/game.css">
+</head>
+
+<body>
+    <div>
+        {% for message in get_flashed_messages() %}
+        <p>
+            <b>{{ message }}</b>
+        </p>
+        {% endfor %}
+    </div>
+
+  <div class="nav">
+    <nav>
+        
+        <ul>
+            <form action="/flee" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="submit" value="Flee" onclick="return confirm('Are you sure you want to flee the battle? You will take some damage while running away')"/>
+            </form>
+        </ul>
+
+        <ul><a href="/logout"><button>Logout</button></a></ul>
+        <ul><a href="/combat_inventory"><button>Inventory</button></a></ul>
+        <div class="health">
+            Health
+            <div>{{session.health}}/{{session.max_health}}</div>
+        </div>
+    </nav>
+  </div>
+
+  <div class="combat_log">
+        {% for log_entry in combat_log %}
+        <p>
+            <b>{{ log_entry.combat_action }}</b>
+        </p>
+        {% endfor %}
+
+  </div>
+
+  <div class="combat_options">
+        {%for worn_item in player_items%}
+        {%if worn_item.slot=="Weapon"%}
+        <h2>Weapon Stats</h2>
+        <h3>Primary attack</h3>
+        <form action="/combat_action" method="post">
+            <input type="hidden" name="attack" value="{{worn_item.damage_style}}"/>
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+            <input type="submit" value="{{worn_item.damage_style}}"/>
+        </form>
+        
+        <ul>
+            <li>
+                {%if worn_item.damage_style in ("Stab","Crush","Slash")%}
+                Physical Damage: {{(worn_item.min_damage*player_stats.physical_modifier//1)|int}}-{{(worn_item.max_damage*player_stats.physical_modifier//1)|int}}
+                {%else%}
+                Magical Damage: {{(worn_item.min_damage*player_stats.magical_modifier//1)|int}}-{{(worn_item.max_damage*player_stats.magical_modifier//1)|int}}
+                {%endif%}
+            </li>
+            <li>
+                Speed: {{(worn_item.weapon_speed*player_stats.speed_modifier)|round(2)}}
+            </li>
+        </ul>
+        
+        {%if worn_item.secondary_style%} 
+        <h3>Secondary attack</h3>
+        <form action="/combat_action" method="post">
+            <input type="hidden" name="attack" value="{{worn_item.secondary_style}}"/>
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+            <input type="submit" value="{{worn_item.secondary_style}}"/>
+        </form>
+
+        <ul>
+            <li>
+                {%if worn_item.secondary_style in ("Stab","Crush","Slash")%}
+                Physical Damage: {{(worn_item.min_damage*player_stats.physical_modifier*0.7//1)|int}}-{{(worn_item.max_damage*player_stats.physical_modifier*0.7//1)|int}}
+                {%else%}
+                Magical Damage: {{(worn_item.min_damage*player_stats.magical_modifier*0.7//1)|int}}-{{(worn_item.max_damage*player_stats.magical_modifier*0.7//1)|int}}
+                {%endif%}
+            </li>
+            <li>
+                Speed: {{(worn_item.weapon_speed*player_stats.speed_modifier)|round(2)}}
+            </li>
+        </ul>
+        {%endif%}
+            
+        
+        {%endif%}
+        {%endfor%}
+  </div>
+
+</body>
+
+</html>

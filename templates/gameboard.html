@@ -48,9 +48,10 @@
 {%endif%}
 
 {% for npc in npcs %}
-        <form action="/fight" method="post">
+        <form action="/combat" method="post">
             <b>{{ npc.npc_name }}</b>
-            <input type="hidden" value="{{npc.id}}"/>
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+            <input type="hidden" name="npc_id" value="{{npc.id}}"/>
             <input type="submit" value="Fight!"/>
         </form>
             

@@ -37,10 +37,13 @@ def check_csrf():
         abort(403)
 
 @app.before_request
-def set_gold_amount():
+def set_player_details():
     if session.get("username"):
         gold=marketplace.get_gold_amount(session["username"])
         session["gold"]=gold
+        health=player.get_health_amount(session["username"])
+        session["health"]=health["current"]
+        session["max_health"]=health["max"]
 
 
 @app.route("/")
@@ -136,10 +139,6 @@ def drop():
 def use_marketplace():
     query=request.args.get("query")
     items=marketplace.get_listed_items(query)
-    for item in items:
-        print(item)
-        for value in item:
-            print(value)
     return render_template("marketplace.html",items=items)
 
 
@@ -208,7 +207,6 @@ def modify():
         item=marketplace.check_item_owner(item_id,username)
         listing=marketplace.check_item_is_listed(item_id,username)
         if item and listing:
-            print(listing[0]["marketplace_price"])
             return render_template("modify_listing.html",item_name=item[0]["item_name"],current_price=listing[0]["marketplace_price"],item_id=item[0]["id"])
         else:
             flash("Listing no longer available")
@@ -320,6 +318,7 @@ def use_items():
     check_csrf()
     item_id=request.form["item_id"]
     result=player.use_item(item_id,session["username"])
+    player.update_max_health(session["username"])
     flash(result)
     return redirect("/inventory")
 
@@ -329,7 +328,6 @@ def play():
     if request.method=="GET":
         
         if session.get("location"):
-            print(session["location"])
             tile=game.tile_details(session["location"])
             return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],containers=tile["containers"],tile_type=tile["tile_type"])
         else:
@@ -393,11 +391,11 @@ def set_stats():
     stamina=int(request.form["stamina"])
     magic=int(request.form["magic"])
     stats=(agility+strength+stamina+magic)
-    print(stats)
     if stats>15:
         flash("Stats can't exceed total of 15")
         return redirect(request.referrer)
     result=player.set_stats(session["username"],agility,magic,stamina,strength,stats)
+    player.update_max_health(session["username"])
     flash(result)
     return redirect(request.referrer)
 
@@ -405,8 +403,11 @@ def set_stats():
 @app.route("/combat",methods=["POST","GET"])
 @login_required
 def combat():
+    
     if request.method=="POST":
+        check_csrf()
         if player.check_if_in_combat(session["username"]):
+            
             return redirect("/combat")
         else:
             npc_id=request.form["npc_id"]
@@ -420,12 +421,24 @@ def combat():
     if request.method=="GET":
         result=player.check_if_in_combat(session["username"])
         if result:
-            npc_id=result[0][npc_id]
+            npc_id=result[0]["npc_id"]
             player_stats=player.get_total_stats(session["username"])
             player_items=player.get_equipped_items(session["username"])
-            npc_stats=game.get_npc_stats(npc_id)
-            npc_items=game.get_npc_items(npc_id)
+            #npc_stats=game.get_npc_stats(npc_id)
+            #npc_items=game.get_npc_items(npc_id)
+            return render_template("combat.html",player_stats=player_stats,player_items=player_items,combat_log=result)
 
         else:
             flash("You are not in combat")
             return redirect("/")
+        
+@app.route("/combat_action",methods=["POST"])
+@login_required
+def combat_action():
+    check_csrf()
+    if request.form["attack"]:
+        result=game.combat_attack_sequence(request.form["attack"],session["username"])
+        flash(result)
+    elif request.form["use"]:
+        game.combat_use_items(request.form["use"],session["username"])
+    return redirect("/combat")

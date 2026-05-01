@@ -7,7 +7,7 @@ health INTEGER DEFAULT 100,
 max_health INTEGER DEFAULT 100,
 gold INTEGER DEFAULT 0 NOT NULL,
 CHECK (gold >= 0),
-CHECK (health >= 0));
+CHECK (health >= 0 AND health<=max_health));
 
 
 CREATE TABLE worlds (
@@ -273,8 +273,8 @@ npc_id INTEGER,
 combat_action TEXT,
 damage INTEGER,
 damage_style INTEGER,
-player_swing_timer FLOAT,
-npc_swing_timer FLOAT,
+player_swing_timer FLOAT DEFAULT 0,
+npc_swing_timer FLOAT DEFAULT 0,
 FOREIGN KEY (damage_style) REFERENCES damage_styles(id),
 FOREIGN KEY (player_id) REFERENCES users(id),
 FOREIGN KEY (npc_id) REFERENCES npcs(id) ON DELETE CASCADE

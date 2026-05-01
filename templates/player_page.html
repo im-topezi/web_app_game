@@ -139,7 +139,7 @@
                 {%endif%}
             </li>
             <li>
-                Speed: {{worn_item.weapon_speed*stats.speed_modifier}}
+                Speed: {{(worn_item.weapon_speed*stats.speed_modifier)|round(2)}}
             </li>
         </ul>
         
@@ -155,7 +155,7 @@
                 {%endif%}
             </li>
             <li>
-                Speed: {{worn_item.weapon_speed*stats.speed_modifier}}
+                Speed: {{(worn_item.weapon_speed*stats.speed_modifier)|round(2)}}
             </li>
         </ul>
         {%endif%}
