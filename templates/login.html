@@ -1,22 +1,15 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>
-            Login
-        </title>
-    </head>
-    <body>
-        <a href="/">&lt;&lt;</a>
-        {% for message in get_flashed_messages() %}
-        <p>
-            <b>{{ message }}</b>
-        </p>
-        {% endfor %}
-        <b>Login</b>
-        <form action="/login" method="post">
-            <input type="text" name="username" value="{{ username }}" placeholder="username"/>
-            <input type="password" name="password" placeholder="password"/>
-            <input type="submit" value="Login"/>
-        </form>
-    </body>
-</html>
+{% extends "layout.html" %}
+    
+{% block title %}Login{% endblock %}
+        
+{% block content %}
+<a href="/">&lt;&lt;</a>
+<div class="how">
+<h2>Login</h2>
+    <form action="/login" method="post">
+        <input type="text" name="username" value="{{ username }}" placeholder="username"/>
+        <input type="password" name="password" placeholder="password"/>
+        <input type="submit" value="Login"/>
+    </form>
+</div>
+{% endblock %}

@@ -1,10 +1,11 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Gameboard{% endblock %}
         
 {% block content %}
+<body class="{{tile_type}}">
 <p>
-    <b>{{ tile_type }}</b>
+    <h2>{{ tile_type }}</h2>
 </p>
 {%if connected.north %}
 
@@ -47,18 +48,33 @@
 </div>
 {%endif%}
 
-{% for npc in npcs %}
-        <form action="/combat" method="post">
-            <b>{{ npc.npc_name }}</b>
-            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-            <input type="hidden" name="npc_id" value="{{npc.id}}"/>
-            <input type="submit" value="Fight!"/>
-        </form>
-            
+<div class="npc_space">
+{% for npc,placements in npc_info %}
+    
+        <div style="position: absolute;
+            bottom: {{placements[1]}}%;
+            right: {{placements[0]}}%">
+            {%if npc.alive==1%}
+            <form action="/combat" method="post">
+                <b>{{ npc.npc_name }} </b>
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="npc_id" value="{{npc.id}}"/>
+                <input type="submit" value="Fight!"/>
+            </form>
+            {%elif npc.alive==0%}
+            <form action="/loot_npc" method="get">
+                <b>{{ npc.npc_name }} (dead)</b>
+                <input type="hidden" name="npc_id" value="{{npc.id}}"/>
+                <input type="submit" value="Loot"/>
+            </form>
+        {%endif%}
+        </div>
+    {% endfor %}
+</div>
         
-{% endfor %}
+
 {% for container in containers %}
-        <div style="position: fixed;
+        <div style="position: absolute;
         top: 50%;
         right: 50%;" class="{{container.container_type}}">
             <form action="/loot" method="get">
@@ -76,4 +92,5 @@
             
         </div>
 {% endfor %}
+</body>
 {%endblock%}

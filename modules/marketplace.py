@@ -43,10 +43,17 @@ def check_balance(item_id,username):
     result=db.query(sql,[username,item_id])
     return result[0] if result else False
 
+def get_offer_options():
+    sql="""
+    SELECT category
+    FROM marketplace_categories
+    """
+    return db.query(sql)
+
 def get_listed_items(query):
     if not query:
         query=""
-    sql="""SELECT items.id,items.item_name,items.player,marketplace_listings.marketplace_price,users.username,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
+    sql="""SELECT items.id,items.item_name,items.player,marketplace_listings.marketplace_price,users.username,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style,marketplace_categories.category
     FROM marketplace_listings
     LEFT JOIN items ON marketplace_listings.item_id=items.id
     LEFT JOIN users on marketplace_listings.seller_id=users.id
@@ -55,10 +62,30 @@ def get_listed_items(query):
     LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
     LEFT JOIN item_slots ON item_details.slot=item_slots.id
     LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
+    LEFT JOIN marketplace_categories ON marketplace_listings.marketplace_category=marketplace_categories.id
     WHERE marketplace_listings.seller_id=users.id
     AND items.item_name LIKE ?
     """
     result=db.query(sql,["%"+ query +"%"])
+    return result
+
+def get_user_listings(username):
+    sql="""SELECT items.id,items.item_name,items.player,marketplace_listings.marketplace_price,users.username,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style,marketplace_categories.category
+    FROM marketplace_listings
+    LEFT JOIN items ON marketplace_listings.item_id=items.id
+    LEFT JOIN users on marketplace_listings.seller_id=users.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
+    LEFT JOIN marketplace_categories ON marketplace_listings.marketplace_category=marketplace_categories.id
+    WHERE marketplace_listings.seller_id=users.id
+    AND marketplace_listings.seller_id=(SELECT id 
+    FROM users 
+    WHERE users.username=?)
+    """
+    result=db.query(sql,[username])
     return result
 
 def check_item_owner(item_id,username):
@@ -78,22 +105,31 @@ def check_item_is_listed(item_id,username):
     return db.query(sql,[item_id,username])
 
 def get_item_details(item_id):
+
     sql="""
-    SELECT items.id,items.item_name,items.player,users.username
-    FROM items
+    SELECT items.id,items.player,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style,users.username
+    FROM items 
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
     LEFT JOIN users ON users.id=items.player
     WHERE items.id=?
     """
+
     return db.query(sql,[item_id])
 
-def put_item_for_sale(item_id,market_price):
+def put_item_for_sale(item_id,market_price,category):
     sql="""
-    INSERT INTO marketplace_listings (item_id,seller_id,marketplace_price)
+    INSERT INTO marketplace_listings (item_id,seller_id,marketplace_price,marketplace_category)
     VALUES (?,(SELECT player 
     FROM items
-    WHERE id=?),?)
+    WHERE id=?),?,(SELECT id
+    FROM marketplace_categories
+    WHERE category=?))
     """
-    return db.execute(sql,[item_id,item_id,market_price])
+    return db.execute(sql,[item_id,item_id,market_price,category])
 
 
 def trade_item(item_id,buyer_username,seller_username):
@@ -185,9 +221,31 @@ def check_item_is_not_worn(item_id):
     """
     result=db.query(sql,[item_id])
 
+def check_trader_wants_offers(item_id):
+    sql="""
+    SELECT marketplace_listings.id
+    FROM marketplace_listings
+    LEFT JOIN marketplace_categories ON marketplace_listings.marketplace_category=marketplace_categories.id
+    WHERE marketplace_listings.item_id=?
+    AND marketplace_categories.category="Want offers"
+    """
+    return db.query(sql,[item_id])
+
+def check_item_listed(item_id):
+    sql="""
+    SELECT marketplace_listings.id
+    FROM marketplace_listings
+    WHERE marketplace_listings.item_id=?
+    """
+    return db.query(sql,[item_id])
+
 def create_trade_offer(item_id,item_offers,buyer_username,gold_offer=0):
     if check_item_not_in_offer(item_id):
         return "Can't make trade offers for items that are part of another offer"
+    if not check_item_listed(item_id):
+        return "Can't make offers for items that are not listed for sale"
+    if not check_trader_wants_offers(item_id):
+        return "Can't make trade offers for items that the owner doesnt want offers for"
     if item_offers or gold_offer:
         buyer_id=get_player_id(buyer_username)
 
@@ -265,17 +323,19 @@ def get_offers_for_item(item_id):
         offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],offer["buyer_name"]))
     return offers
 
-def modify_listing(item_id,username,new_price):
+def modify_listing(item_id,username,new_price,category):
 
     sql="""
     UPDATE marketplace_listings
-    SET marketplace_price=?
+    SET marketplace_price=?,marketplace_category=(SELECT id
+    FROM marketplace_categories
+    WHERE category=?)
     WHERE item_id=?
     AND seller_id=(SELECT id
     FROM users
     WHERE username=?)
     """
-    db.execute(sql,[new_price,item_id,username])
+    db.execute(sql,[new_price,category,item_id,username])
 
 
 

@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>{% block title %}{% endblock %}</title>
+  <title>Fight!</title>
   <link rel="stylesheet" href="/static/game.css">
 </head>
 
@@ -27,23 +27,41 @@
 
         <ul><a href="/logout"><button>Logout</button></a></ul>
         <ul><a href="/combat_inventory"><button>Inventory</button></a></ul>
-        <div class="health">
-            Health
-            <div>{{session.health}}/{{session.max_health}}</div>
-        </div>
+
     </nav>
   </div>
 
   <div class="combat_log">
         {% for log_entry in combat_log %}
-        <p>
+        {%if log_entry.attacker=="player"%}
+        <div class="player_attack">
+
+                {{ log_entry.combat_action }} 
+                {%if log_entry.damage%}
+                for <b>{{log_entry.damage}}</b> {{log_entry.style}} damage
+                {%endif%}
+        </div>
+        {%elif log_entry.attacker=="npc"%}
+        <div class="npc_attack">
+                {{ log_entry.combat_action }} 
+                {%if log_entry.damage%} 
+                for <b>{{log_entry.damage}}</b> {{log_entry.style}} damage
+                {%endif%}
+        </div>
+        {%else%}
+        <div class="combat_info">
             <b>{{ log_entry.combat_action }}</b>
-        </p>
+        </div>
+        {%endif%}
         {% endfor %}
 
   </div>
 
   <div class="combat_options">
+        <div class="health">
+            <h2>Your Health</h2> 
+            <div>{{session.health}}/{{session.max_health}}</div>
+        </div>
         {%for worn_item in player_items%}
         {%if worn_item.slot=="Weapon"%}
         <h2>Weapon Stats</h2>
@@ -92,7 +110,34 @@
         
         {%endif%}
         {%endfor%}
+        <h3>Fist attack</h3>
+        <form action="/combat_action" method="post">
+            <input type="hidden" name="attack" value="Punch"/>
+            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+            <input type="submit" value="Punch"/>
+        </form>
+        
+        <ul>
+            <li>
+
+                Physical Damage: {{((player_stats.strength+1)*player_stats.physical_modifier//1)|int}}
+
+            </li>
+            <li>
+                Speed: {{(1*player_stats.speed_modifier)|round(2)}}
+            </li>
+        </ul>
+
   </div>
+
+  <div class="npc_info">
+    
+            <h2>{{npc_health.name}}'s' Health</h2>
+            <div>{{npc_health.current}}/{{npc_health.max}}</div>
+
+
+  </div>
+  
 
 </body>
 

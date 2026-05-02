@@ -146,11 +146,18 @@ FOREIGN KEY (item_id) REFERENCES items(id),
 FOREIGN KEY (offer_id) REFERENCES trade_offers(id) ON DELETE CASCADE
 );
 
+CREATE TABLE marketplace_categories(
+    id INTEGER PRIMARY KEY,
+    category TEXT
+);
+
 CREATE TABLE marketplace_listings (
 id INTEGER PRIMARY KEY,
 item_id INTEGER NOT NULL,
 seller_id INTEGER NOT NULL,
 marketplace_price INTEGER,
+marketplace_category INTEGER,
+FOREIGN KEY (marketplace_category) REFERENCES marketplace_categories(id),
 FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
 FOREIGN KEY (seller_id) REFERENCES users(id)
 );
@@ -275,6 +282,7 @@ damage INTEGER,
 damage_style INTEGER,
 player_swing_timer FLOAT DEFAULT 0,
 npc_swing_timer FLOAT DEFAULT 0,
+attacker TEXT,
 FOREIGN KEY (damage_style) REFERENCES damage_styles(id),
 FOREIGN KEY (player_id) REFERENCES users(id),
 FOREIGN KEY (npc_id) REFERENCES npcs(id) ON DELETE CASCADE
@@ -283,7 +291,8 @@ FOREIGN KEY (npc_id) REFERENCES npcs(id) ON DELETE CASCADE
 
 
 
-
+INSERT INTO marketplace_categories(category) VALUES ("Want offers");
+INSERT INTO marketplace_categories(category) VALUES ("Dont want offers");
 
 
 INSERT INTO tile_types(type_name,difficulty) VALUES ("Swamp",50);

@@ -36,7 +36,11 @@ def calculate_attacks(combat_log,attack,username):
     for item in npc_items:
         if item["slot"]=="Weapon":
             npc_weapon=item
-            npc_attack=random.choice((npc_weapon["damage_style"],npc_weapon["secondary_style"]))
+            if npc_weapon["secondary_style"]:
+                npc_attack=random.choice((npc_weapon["damage_style"],npc_weapon["secondary_style"]))
+            else:
+                npc_attack=npc_weapon["damage_style"]
+            
         else:
             match item["type"]:
                 case "Leather Armor":
@@ -45,7 +49,9 @@ def calculate_attacks(combat_log,attack,username):
                     npc_armor_types["cloth"]+=1
                 case "Metal Armor":
                     npc_armor_types["metal"]+=1
-
+    if attack=="Punch":
+        player_weapon=None
+        attack="Crush"
     if player_weapon:
         player_speed=round(player_weapon["weapon_speed"]*player_stats["speed_modifier"],2)
     else:
@@ -56,7 +62,7 @@ def calculate_attacks(combat_log,attack,username):
 
     if attack:
         for i in range(int(player_tick_time//player_speed)):
-            if attack in ("Slash","Crush","Stab","Punch"):
+            if attack in ("Slash","Crush","Stab"):
                 hit_chance=player_stats["agility"]+5
                 dodge_chance=npc_stats["agility"]+5
                 rolls=hit_chance+dodge_chance
@@ -67,7 +73,7 @@ def calculate_attacks(combat_log,attack,username):
                         if attack==player_weapon["secondary_style"]:
                             damage=damage*0.7
                     else:
-                        damage=player_stats["strength"]+10
+                        damage=player_stats["strength"]+1
 
                     armor_modifier=1
                     match attack:
@@ -84,18 +90,18 @@ def calculate_attacks(combat_log,attack,username):
                     print(f"Final damage: {final_damage}, damage: {damage}, armor abs: {armor_absorption}")
                     player_damage+=final_damage
                     sql_player_hit="""
-                    INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style)
-                    VALUES (?,?,"You hit!",?,(SELECT id
+                    INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style,attacker)
+                    VALUES (?,?,"You hit",?,(SELECT id
                     FROM damage_styles
-                    WHERE style=?))
+                    WHERE style=?),"player")
                     """
                     result=db.execute(sql_player_hit,[combat_log["player_id"],combat_log["npc_id"],final_damage,attack])
                     
                     
                 else:
                     sql_player_miss="""
-                    INSERT INTO combat_log (player_id,npc_id,combat_action)
-                    VALUES (?,?,"Your hit misses the enemy")
+                    INSERT INTO combat_log (player_id,npc_id,combat_action,attacker)
+                    VALUES (?,?,"Your attack misses","player")
                     """
                     db.execute(sql_player_miss,[combat_log["player_id"],combat_log["npc_id"]])
             else:
@@ -120,18 +126,18 @@ def calculate_attacks(combat_log,attack,username):
                     player_damage+=final_damage
                     print(f"Final damage: {final_damage}, damage: {damage}")
                     sql_player_hit="""
-                    INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style)
-                    VALUES (?,?,"You hit!",?,(SELECT id
+                    INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style,attacker)
+                    VALUES (?,?,"You hit",?,(SELECT id
                     FROM damage_styles
-                    WHERE style=?))
+                    WHERE style=?),"player")
                     """
                     result=db.execute(sql_player_hit,[combat_log["player_id"],combat_log["npc_id"],final_damage,attack])
                     
                     
                 else:
                     sql_player_miss="""
-                    INSERT INTO combat_log (player_id,npc_id,combat_action)
-                    VALUES (?,?,"Your attack misses")
+                    INSERT INTO combat_log (player_id,npc_id,combat_action,attacker)
+                    VALUES (?,?,"Your attack misses","player")
                     """
                     db.execute(sql_player_miss,[combat_log["player_id"],combat_log["npc_id"]])
         sql_deal_damage_to_npc="""
@@ -148,10 +154,12 @@ def calculate_attacks(combat_log,attack,username):
             WHERE id=?
             """
             db.execute(sql_kill_npc,[combat_log["npc_id"]])
-            return "NPC died"
+            return "Enemy defeated"
     
     if npc_weapon:
         npc_speed=round(npc_weapon["weapon_speed"]*npc_stats["speed_modifier"],2)
+        
+        
     else:
         sql_get_npc_type="""
         SELECT npc_types.npc_type
@@ -163,7 +171,7 @@ def calculate_attacks(combat_log,attack,username):
         match npc_type:
             case "Human":
                 npc_speed=1
-                npc_attack="Punch"
+                npc_attack="Crush"
             case "Bear":
                 npc_speed=2
                 npc_attack=random.choice(["Slash","Stab"])
@@ -175,11 +183,11 @@ def calculate_attacks(combat_log,attack,username):
                 npc_attack=random.choice(["Slash","Crush","Stab","Fire","Frost","Shock"])
             case "Skeleton":
                 npc_speed=1.5
-                npc_attack="Punch"
+                npc_attack="Crush"
         
         
     for i in range(int(npc_tick_time//npc_speed)):
-        if npc_attack in ("Slash","Crush","Stab","Punch"):
+        if npc_attack in ("Slash","Crush","Stab"):
             
             hit_chance=npc_stats["agility"]+5
             dodge_chance=player_stats["agility"]+5
@@ -207,19 +215,19 @@ def calculate_attacks(combat_log,attack,username):
                 npc_damage+=final_damage
                 print(f"Final damage: {final_damage}, damage: {damage}, armor abs: {armor_absorption}")
                 sql_npc_hit="""
-                INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style)
-                VALUES (?,?,"Enemy hits you!",?,(SELECT id
+                INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style,attacker)
+                VALUES (?,?,"Enemy hits you",?,(SELECT id
                     FROM damage_styles
-                    WHERE style=?))
+                    WHERE style=?),"npc")
                 """
                 db.execute(sql_npc_hit,[combat_log["player_id"],combat_log["npc_id"],final_damage,npc_attack])
                 
             else:
-                sql_enemy_miss="""
-                INSERT INTO combat_log (player_id,npc_id,combat_action)
-                VALUES (?,?,"Enemys attack misses you")
+                sql_npc_miss="""
+                INSERT INTO combat_log (player_id,npc_id,combat_action,attacker)
+                VALUES (?,?,"Enemys attack misses","npc")
                 """
-                db.execute(sql_enemy_miss,[combat_log["player_id"],combat_log["npc_id"]])
+                db.execute(sql_npc_miss,[combat_log["player_id"],combat_log["npc_id"]])
         else:
             hit_chance=npc_stats["magic"]+5
             dodge_chance=player_stats["agility"]+5
@@ -245,17 +253,17 @@ def calculate_attacks(combat_log,attack,username):
                 npc_damage+=final_damage
                 print(f"Final damage: {final_damage}, damage: {damage}")
                 sql_npc_hit="""
-                INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style)
-                VALUES (?,?,"Enemy hits you!",?,(SELECT id
+                INSERT INTO combat_log (player_id,npc_id,combat_action,damage,damage_style,attacker)
+                VALUES (?,?,"Enemy hits you",?,(SELECT id
                     FROM damage_styles
-                    WHERE style=?))
+                    WHERE style=?),"npc")
                 """
                 db.execute(sql_npc_hit,[combat_log["player_id"],combat_log["npc_id"],final_damage,npc_attack])
                 
             else:
                 sql_npc_miss="""
-                INSERT INTO combat_log (player_id,npc_id,combat_action)
-                VALUES (?,?,"Enemys attack misses you")
+                INSERT INTO combat_log (player_id,npc_id,combat_action,attacker)
+                VALUES (?,?,"Enemys attack misses","npc")
                 """
                 db.execute(sql_npc_miss,[combat_log["player_id"],combat_log["npc_id"]])
     sql_get_player_health="""

@@ -1,23 +1,16 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>
-            Register
-        </title>
-    </head>
-    <body>
-        <a href="/">&lt;&lt;</a>
-        {% for message in get_flashed_messages() %}
-        <p>
-            <b>{{ message }}</b>
-        </p>
-        {% endfor %}
-        <b>Register</b>
+{% extends "layout.html" %}
+    
+{% block title %}Register{% endblock %}
+        
+{% block content %}
+<a href="/">&lt;&lt;</a>
+<div class="how">
+<h2>Register</h2>
         <form action="/register" method="post">
             <input type="text" name="username" value="{{ username }}" placeholder="username"/>
             <input type="password" name="password1" placeholder="password"/>
             <input type="password" name="password2" placeholder="password again"/>
             <input type="submit" value="Register"/>
         </form>
-    </body>
-</html>
+</div>
+{% endblock %}

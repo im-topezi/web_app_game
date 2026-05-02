@@ -162,7 +162,7 @@ class Tile:
         else:
             if (random.randint(1,100))>=90:
                 new_container=Container(self.id,container_type)
-                #new_container.add_items_to_container(self.world.difficulty)
+                new_container.add_items_to_container(self.world.difficulty)
                 self.containers.append(new_container)
 
 class Path:
@@ -315,6 +315,11 @@ class Container:
             new_range=random.choice([1,1,1,1,1,1,1,1,2])
             for i in range(new_range):
                 new_item.generate_a_potion()
+        if self.type=="chest":
+            new_item=Item(difficulty,{"location":"container","id":self.id})
+            new_range=random.choice([1,1,1,1,1,1,1,1,2])
+            for i in range(new_range):
+                new_item.generate_a_random_item()
 
 class Item:
     def __init__(self,level,location):
@@ -446,11 +451,17 @@ class Item:
 
         
     def generate_a_random_item(self):
-        sql_get_categories="""
-        SELECT category_name FROM item_categories
-        """
-        categories=db.query(sql_get_categories)
-        item_category=random.choice(categories)["category_name"]
+            sql_get_slots="""
+            SELECT slot_name
+            FROM item_slots
+            """
+            slots=db.query(sql_get_slots)
+            slot=random.choice(slots)
+            if slot["slot_name"]=="Weapon":
+                self.generate_a_random_weapon(self.level)
+            else:
+                self.generate_a_random_armor(slot["slot_name"],self.level)
+        
 
 
     def generate_a_random_weapon(self,stats):

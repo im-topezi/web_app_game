@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Modify listing{% endblock %}
         
 {% block content %}
 
@@ -11,6 +11,11 @@
         <p>
             <form action="/modify" method="post">
                 {{item_name}}
+                <select name="offers">
+                    {%for offer_option in offer_options%}
+                    <option value="{{offer_option.category}}">{{offer_option.category}}</option>
+                    {%endfor%}
+                </select>
                 <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
                 <input type="number" min="0" name="new_price" value="{{current_price}}"/>
                 <input type="hidden" name="item_id" value="{{item_id}}"/>

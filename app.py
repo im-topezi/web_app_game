@@ -32,6 +32,26 @@ def cant_be_in_game(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def cant_be_in_combat(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("username"):
+            combat=player.check_if_in_combat(session["username"])
+            if combat:
+                return redirect("/combat")
+        return f(*args, **kwargs)
+    return decorated_function
+
+def must_be_in_game(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("username"):
+            tile=game.check_if_in_game(session["username"])
+            if not tile:
+                return redirect("/")
+        return f(*args, **kwargs)
+    return decorated_function
+
 def check_csrf():
     if request.form["csrf_token"] != session["csrf_token"]:
         abort(403)
@@ -52,7 +72,9 @@ def index():
     worlds=[]
     if session.get("username"):
         worlds=player.get_user_worlds(session["username"])
-    return render_template("index.html",worlds=worlds)
+        return render_template("index.html",worlds=worlds)
+    else:
+        return redirect("/how")
 
 
 
@@ -95,6 +117,10 @@ def logout():
     session.clear()
     return redirect("/")
 
+@app.route("/how")
+def how():
+    return render_template("how_to_play.html")
+
 
 @app.route("/inventory")
 @login_required
@@ -104,27 +130,76 @@ def inventory():
     stats=player.get_total_stats(session["username"])
     return render_template("inventory.html",items=items,worn_items=worn_items,stats=stats,previous_page=request.referrer if request.referrer else "")
 
-#Add checks that you're in the same tile
+
 @app.route("/loot",methods=["POST","GET"])
 @login_required
+@must_be_in_game
+@cant_be_in_combat
 def loot():
     if request.method=="GET":
         container_id=request.args.get("container_id")
-        items=game.get_container_items(container_id)
-        return render_template("loot.html",items=items,container_id=container_id)
+        if game.check_container_location(container_id,session["location"]):
+            if not game.check_enemies_in_the_tile(container_id):
+                items=game.get_container_items(container_id)
+                return render_template("loot.html",items=items,container_id=container_id)
+            else:
+                flash("You must defeat all the enemies in the tile to loot that")
+                return redirect("/")
+        else:
+            flash("You must be in same tile to loot that")
+            return redirect("/")
         
     if request.method=="POST":
         check_csrf()
         item_id=request.form["item_id"]
         container_id=request.form["container_id"]
-        result=game.take_item(item_id,session["username"])
-        if result["rows_affected"]==1:
-            flash(f"{request.form['item_name']} has been added to your inventory")
-        return redirect(request.referrer)
+        if game.check_container_location(container_id,session["location"]):
+            result=game.take_item(item_id,session["username"])
+            if result["rows_affected"]>=1:
+                flash(f"{request.form['item_name']} has been added to your inventory")
+            return redirect(request.referrer)
+        else:
+            flash("You must be in same tile to loot that")
+            return redirect("/")
+        
+@app.route("/loot_npc",methods=["POST","GET"])
+@login_required
+@must_be_in_game
+@cant_be_in_combat
+def loot_npc():
+    if request.method=="GET":
+        npc_id=request.args.get("npc_id")
+        if game.check_npc_location(npc_id,session["username"]):
+            if not game.check_npc_is_alive(npc_id):
+                items=game.get_npc_items(npc_id)
+                return render_template("loot.html",items=items,npc_id=npc_id)
+            else:
+                flash("You must defeat the enemy to loot them")
+                return redirect("/")
+        else:
+            flash("You must be in same tile to loot that")
+            return redirect("/")
+        
+    if request.method=="POST":
+        check_csrf()
+        item_id=request.form["item_id"]
+        npc_id=request.form["npc_id"]
+        if game.check_npc_location(npc_id,session["username"]):
+            result=game.take_item(item_id,session["username"])
+            if result["rows_affected"]>=1:
+                game.unequip_npc_item(npc_id,item_id)
+                flash(f"{request.form['item_name']} has been added to your inventory")
+                if game.delete_npc(npc_id):
+                    return redirect("/play")
+            return redirect(request.referrer)
+        else:
+            flash("You must be in same tile to loot that")
+            return redirect("/")
     
 
 @app.route("/drop",methods=["POST"])
 @login_required
+@cant_be_in_combat
 def drop():
         check_csrf()
         item_id=request.form["item_id"]
@@ -151,20 +226,23 @@ def sell():
         item=marketplace.check_item_owner(item_id,session["username"])
         #MAKE ANOTHER CHECK HERE
         if item:
-            return render_template("sell.html",item=item[0])
+            offer_options=marketplace.get_offer_options()
+        
+            return render_template("sell.html",item=item[0],offer_options=offer_options)
         else:
             abort(403)
     if request.method=="POST":
         check_csrf()
         item_id=request.form["item_id"]
         market_price=request.form["market_price"]
+        category=request.form["offers"]
         if int(market_price) < 1:
             flash("Price has to be more than 0")
             return redirect("/inventory")
         item=marketplace.check_item_owner(item_id,session["username"])
         #MAKE ANOTHER CHECK HERE
         if item:
-            result=marketplace.put_item_for_sale(item_id,market_price)
+            result=marketplace.put_item_for_sale(item_id,market_price,category)
             if result["rows_affected"]==1:
                 flash(f"{item[0]['item_name']} has been listed to the marketplace")
             else:
@@ -207,7 +285,8 @@ def modify():
         item=marketplace.check_item_owner(item_id,username)
         listing=marketplace.check_item_is_listed(item_id,username)
         if item and listing:
-            return render_template("modify_listing.html",item_name=item[0]["item_name"],current_price=listing[0]["marketplace_price"],item_id=item[0]["id"])
+            offer_options=marketplace.get_offer_options()
+            return render_template("modify_listing.html",item_name=item[0]["item_name"],current_price=listing[0]["marketplace_price"],item_id=item[0]["id"],offer_options=offer_options)
         else:
             flash("Listing no longer available")
             return redirect("/marketplace")
@@ -217,10 +296,11 @@ def modify():
         item_id=request.form["item_id"]
         username=session["username"]
         new_price=request.form["new_price"]
+        category=request.form["offers"]
         item=marketplace.check_item_owner(item_id,username)
         listing=marketplace.check_item_is_listed(item_id,username)
         if item and listing:
-            marketplace.modify_listing(item_id,username,new_price)
+            marketplace.modify_listing(item_id,username,new_price,category)
             flash("Listing updated")
         else:
             flash("Listing no longer available")
@@ -245,8 +325,16 @@ def trade():
     if request.method=="GET":
         item_id=request.args.get("item_id")
         item=marketplace.get_item_details(item_id)
-        #ADD A CHECK HERE
         if item:
+            if marketplace.check_item_not_in_offer(item_id):
+                flash("Can't make trade offers for items that are part of another offer")
+                return redirect("/marketplace")
+            if not marketplace.check_item_listed(item_id):
+                flash("Can't make offers for items that are not listed for sale")
+                return redirect("/marketplace")
+            if not marketplace.check_trader_wants_offers(item_id):
+                flash("Can't make trade offers for items that the owner doesnt want offers for")
+                return redirect("/marketplace")
             offers=marketplace.get_offers_for_item(item_id)
             items=player.get_player_items(session["username"])
             return render_template("trade_offer.html",items=items,item=item[0],offers=offers)
@@ -295,7 +383,8 @@ def accept_trade_offer():
 def generate_new_world():
     check_csrf()
     if request.form["world_name"]:
-        world.World(50,session["username"],request.form["world_name"]).generate_world()
+        difficulty=game.get_world_difficulty(session["username"])
+        world.World(difficulty,session["username"],request.form["world_name"]).generate_world()
         flash("New world generated!")
     else:
         flash("World needs a name!")
@@ -314,6 +403,7 @@ def delete_world():
 
 @app.route("/use",methods=["POST"])
 @login_required
+@cant_be_in_combat
 def use_items():
     check_csrf()
     item_id=request.form["item_id"]
@@ -324,12 +414,15 @@ def use_items():
 
 @app.route("/play", methods=["POST","GET"])
 @login_required
+@cant_be_in_combat
 def play():
     if request.method=="GET":
         
         if session.get("location"):
             tile=game.tile_details(session["location"])
-            return render_template("gameboard.html",connected=tile["connected"],npcs=tile["npcs"],containers=tile["containers"],tile_type=tile["tile_type"])
+            npcs=tile["npcs"]
+            placements=tile["placements"]
+            return render_template("gameboard.html",connected=tile["connected"],npc_info=zip(npcs,placements),containers=tile["containers"],tile_type=tile["tile_type"],)
         else:
             flash("You're not on an adventure, choose a world to play!")
             return redirect("/")
@@ -348,19 +441,24 @@ def play():
 
 @app.route("/move",methods=["POST"])
 @login_required
+@must_be_in_game
+@cant_be_in_combat
 def move():
     check_csrf()
     target_tile=request.form["tile"]
     current_tile=session["location"]
     if game.move(target_tile,current_tile):
         result=game.update_location(current_tile,target_tile,session["username"])
-        if result["rows_affected"]==1:
+        print(result)
+        if result["rows_affected"]>=1:
             session["location"]=target_tile
     return redirect("/play")
 
 
 @app.route("/leave", methods=["POST"])
 @login_required
+@must_be_in_game
+@cant_be_in_combat
 def leave():
     check_csrf()
     result=game.update_location(session["location"],None,session["username"])
@@ -371,10 +469,10 @@ def leave():
 @app.route("/player/<username>",methods=["GET","POST"])
 def player_page(username):
     info=player.get_player_info(username)
-    items=player.get_player_items(username)
-    worn_items=player.get_equipped_items(username)
-    stats=player.get_total_stats(username)
-    if info:
+    if info[0]["username"]:
+        items=marketplace.get_user_listings(username)
+        worn_items=player.get_equipped_items(username)
+        stats=player.get_total_stats(username)
         return render_template("player_page.html",items=items,stats=stats,info=info,worn_items=worn_items)
     else:
         abort(404)
@@ -384,7 +482,7 @@ def player_page(username):
 @login_required
 @cant_be_in_game
 def set_stats():
-    #check_csrf()
+    check_csrf()
     
     agility=int(request.form["agility"])
     strength=int(request.form["strength"])
@@ -402,21 +500,24 @@ def set_stats():
 
 @app.route("/combat",methods=["POST","GET"])
 @login_required
+@must_be_in_game
 def combat():
-    
     if request.method=="POST":
         check_csrf()
         if player.check_if_in_combat(session["username"]):
-            
             return redirect("/combat")
         else:
             npc_id=request.form["npc_id"]
-            if game.check_npc_is_alive(npc_id) and game.check_npc_location(npc_id,session["username"]):
-                game.create_combat_encounter(npc_id,session["username"])
-                return redirect("/combat")
+            if session["health"]>1:
+                if game.check_npc_is_alive(npc_id) and game.check_npc_location(npc_id,session["username"]):
+                    game.create_combat_encounter(npc_id,session["username"])
+                    return redirect("/combat")
+                else:
+                    flash("You can't attack that")
+                    return redirect("/play")
             else:
-                flash("You can't attack that")
-                return redirect("/")
+                flash("You are too wounded to fight")
+                return redirect("/play")
 
     if request.method=="GET":
         result=player.check_if_in_combat(session["username"])
@@ -424,21 +525,39 @@ def combat():
             npc_id=result[0]["npc_id"]
             player_stats=player.get_total_stats(session["username"])
             player_items=player.get_equipped_items(session["username"])
-            #npc_stats=game.get_npc_stats(npc_id)
-            #npc_items=game.get_npc_items(npc_id)
-            return render_template("combat.html",player_stats=player_stats,player_items=player_items,combat_log=result)
+            npc_stats=game.get_npc_stats(npc_id)
+            npc_items=game.get_npc_items(npc_id)
+            npc_health=game.get_npc_health(npc_id)
+            return render_template("combat.html",player_stats=player_stats,player_items=player_items,combat_log=result,npc_stats=npc_stats,npc_items=npc_items,npc_health=npc_health)
 
         else:
             flash("You are not in combat")
-            return redirect("/")
+            return redirect("/play")
         
 @app.route("/combat_action",methods=["POST"])
 @login_required
+@must_be_in_game
 def combat_action():
     check_csrf()
-    if request.form["attack"]:
-        result=game.combat_attack_sequence(request.form["attack"],session["username"])
-        flash(result)
-    elif request.form["use"]:
-        game.combat_use_items(request.form["use"],session["username"])
-    return redirect("/combat")
+    result=game.combat_attack_sequence(request.form,session["username"])
+    flash(result)
+    if result=="Combat continues":
+        return redirect("/combat")
+    elif result=="You are greatly wounded":
+        flash("You flee the battle")
+        player.delete_combat_log(session["username"])
+        return redirect("/play")
+    elif result=="Enemy defeated":
+        player.delete_combat_log(session["username"])
+        return redirect("/play")
+
+
+@app.route("/flee",methods=["POST"])
+@login_required
+@must_be_in_game
+def flee():
+    check_csrf()
+    flash("You flee the battle")
+    player.deal_damage_to_player(session["username"],50)
+    player.delete_combat_log(session["username"])
+    return redirect("/play")

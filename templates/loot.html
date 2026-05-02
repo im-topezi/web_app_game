@@ -1,22 +1,184 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Loot{% endblock %}
         
 {% block content %}
 
 <a href="/play">&lt;&lt;</a>
+{%if container_id%}
+<div>
+    <table>
+        <tr>
+            <th>Item name</th>
+            <th>Item type</th>
+            <th>Item level</th>
+            <th>Item rarity</th>
+            <th>Item stats</th>
+            <th>Item slot</th>
+            <th>Trader price</th>
+        </tr>
+        {% for item in items %}
 
-{% for item in items %}
-        <p>
+        <tr class="{{item.rarity}}">
+            <td>{{item.item_name}}</td>
+            <td>{{item.type}}</td>
+            <td>{{item.item_level}}</td>
+            <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
+            <td>
+                <ul>
+                    {%if item.magic%}
+                    <li>
+                        Magic: {{item.magic}}
+                    </li>
+                    {%endif%}
+                    {%if item.agility%}
+                    <li>
+                        
+                        Agility: {{item.agility}}
+    
+                    </li>
+                    {%endif%}
+
+                    {%if item.strength%}
+                    <li>
+                        
+                        Strength: {{item.strength}}
+    
+                    </li>
+                    {%endif%}
+                    {%if item.stamina%}
+                    <li>
+                        Stamina: {{item.stamina}}
+                    </li>
+                    {%endif%}
+                    {%if item.armor%}
+                    <li>
+                        
+                        Armor: {{item.armor}}
+    
+                    </li>
+                    {%endif%}
+                </ul>
+                {%if item.slot=="Weapon"%}
+                <ul>
+                    <li>
+                        Damage: {{item.min_damage}}-{{item.max_damage}}
+                    </li>
+                    <li>
+                        Speed: {{item.weapon_speed}}
+                    </li>
+                    <li>
+                        Damage styles: {{item.damage_style}} {%if item.secondary_style%}/ {{item.secondary_style}} {%endif%}
+                    </li>
+                </ul>
+                {%endif%}
+
+            </td>
+            <td>{{item.slot}}</td>
+            <td>{{item.trader_price}}</td>
+            <td>
             <form action="/loot" method="post">
-                <b>{{ item.item_name }}</b>
                 <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
                 <input type="hidden" name="container_id" value="{{container_id}}"/>
                 <input type="hidden" name="item_id" value="{{item.id}}"/>
                 <input type="hidden" name="item_name" value="{{item.item_name}}"/>
                 <input type="submit" value="take"/>
             </form>
-            
-        </p>
-{% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    
+</div>
+{%endif%}
+
+{%if npc_id%}
+<div>
+    <table>
+        <tr>
+            <th>Item name</th>
+            <th>Item type</th>
+            <th>Item level</th>
+            <th>Item rarity</th>
+            <th>Item stats</th>
+            <th>Item slot</th>
+            <th>Trader price</th>
+        </tr>
+        {% for item in items %}
+
+        <tr class="{{item.rarity}}">
+            <td>{{item.item_name}}</td>
+            <td>{{item.type}}</td>
+            <td>{{item.item_level}}</td>
+            <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
+            <td>
+                <ul>
+                    {%if item.magic%}
+                    <li>
+                        Magic: {{item.magic}}
+                    </li>
+                    {%endif%}
+                    {%if item.agility%}
+                    <li>
+                        
+                        Agility: {{item.agility}}
+    
+                    </li>
+                    {%endif%}
+
+                    {%if item.strength%}
+                    <li>
+                        
+                        Strength: {{item.strength}}
+    
+                    </li>
+                    {%endif%}
+                    {%if item.stamina%}
+                    <li>
+                        Stamina: {{item.stamina}}
+                    </li>
+                    {%endif%}
+                    {%if item.armor%}
+                    <li>
+                        
+                        Armor: {{item.armor}}
+    
+                    </li>
+                    {%endif%}
+                </ul>
+                {%if item.slot=="Weapon"%}
+                <ul>
+                    <li>
+                        Damage: {{item.min_damage}}-{{item.max_damage}}
+                    </li>
+                    <li>
+                        Speed: {{item.weapon_speed}}
+                    </li>
+                    <li>
+                        Damage styles: {{item.damage_style}} {%if item.secondary_style%}/ {{item.secondary_style}} {%endif%}
+                    </li>
+                </ul>
+                {%endif%}
+
+            </td>
+            <td>{{item.slot}}</td>
+            <td>{{item.trader_price}}</td>
+            <td>
+            <form action="/loot_npc" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="npc_id" value="{{npc_id}}"/>
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                <input type="hidden" name="item_name" value="{{item.item_name}}"/>
+                <input type="submit" value="take"/>
+            </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    
+</div>
+
+{%endif%}
 {% endblock %}

@@ -13,7 +13,8 @@ def tile_details(tile_id):
         },
         "objects":[],
         "npcs":[],
-        "tile_type":"void"
+        "tile_type":"void",
+        "placements":[]
     }
     get_paths_sql="""
     SELECT first_tile AS tile
@@ -68,16 +69,63 @@ def tile_details(tile_id):
     tile["npcs"]=db.query(sql_npc,[tile_id])
     tile["containers"]=db.query(sql_container,[tile_id])
     tile["tile_type"]=db.query(sql_type,[tile_id])[0]["tile_type"]
+    tile["placements"]=generate_npc_placement(tile["npcs"])
+
     return tile
 
+def get_npc_health(npc_id):
+    sql="""
+    SELECT health,max_health,npc_name
+    FROM npcs
+    WHERE id=?
+    """
+    result=db.query(sql,[npc_id])[0]
+    info={
+        "name":result["npc_name"],
+        "current":result["health"],
+        "max":result["max_health"]
+    }
+    return info
 
+def check_container_location(container_id,player_location):
+    sql="""
+    SELECT tile
+    FROM containers
+    WHERE id=?
+    """
+    container_location=db.query(sql,[container_id])[0]["tile"]
+    
+    return int(player_location)==int(container_location)
 
+def check_enemies_in_the_tile(container_id):
+    sql="""
+    SELECT npcs.id
+    FROM npcs
+    WHERE npcs.tile=(SELECT containers.tile
+    FROM containers
+    WHERE containers.id=?
+    AND containers.container_type="chest")
+    AND npcs.alive=TRUE
+    """
+    npcs=db.query(sql,[container_id])
+    return True if npcs else False
 
 def get_container_items(container_id):
     sql="""
-    SELECT * 
+    SELECT items.id,items.player,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
     FROM items 
+    LEFT JOIN marketplace_listings ON marketplace_listings.item_id=items.id
+    LEFT JOIN offered_items ON offered_items.item_id=items.id
+    LEFT JOIN equipped_items ON equipped_items.item_id=items.id
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
     WHERE container=?
+    AND marketplace_listings.item_id IS NULL
+    AND offered_items.item_id IS NULL
+    AND equipped_items.item_id IS NULL
     """
     items=db.query(sql,[container_id])
     return items
@@ -95,8 +143,14 @@ def take_item(item_id,player):
 
 
 
-def generate_container_placement():
-    pass
+def generate_npc_placement(npcs):
+    placements=[(10,20),(80,20),(20,80),(15,70),(10,90),(90,30),(15,10),(30,20),(20,5)]
+    npc_placements=[]
+    for npc in npcs:
+        placement=random.choice(placements)
+        npc_placements.append(placement)
+        placements.remove(placement)
+    return npc_placements
 
 
 
@@ -213,6 +267,7 @@ def check_npc_location(npc_id,username):
     else:
         return False
     
+    
 def get_npc_items(npc_id):
     sql="""
     SELECT items.id,items.npc,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
@@ -278,9 +333,31 @@ def get_npc_stats(npc_id):
         if strength_modifier<heavy_items:
             stats["speed_modifier"]+=heavy_items-strength_modifier
     return stats
+
+def unequip_npc_item(npc_id,item_id):
+    sql="""
+    DELETE FROM equipped_items
+    WHERE npc_id=?
+    AND item_id=?
+    """
+    db.execute(sql,[npc_id,item_id])
+
+def delete_npc(npc_id):
+    if not get_npc_items(npc_id):
+        sql="""
+        DELETE FROM npcs
+        WHERE id=?
+        """
+        db.execute(sql,[npc_id])
+        return True
+    return False
     
 
-def combat_attack_sequence(attack,username):
+def combat_attack_sequence(form_data,username):
+    if form_data.get("attack"):
+        attack=form_data["attack"]
+    else:
+        attack=""
     sql_player_get_combat_log="""
     SELECT npc_id,player_id,player_swing_timer,npc_swing_timer
     FROM combat_log
@@ -291,6 +368,8 @@ def combat_attack_sequence(attack,username):
     """
     combat_log=db.query(sql_player_get_combat_log,[username])[-1]
     result=combat.calculate_attacks(combat_log,attack,username)
+    if result=="Enemy defeated":
+        delete_npc(combat_log["npc_id"])
     return result
 
 
@@ -304,6 +383,23 @@ def combat_use_items(item_id,username):
         WHERE username=?)
     ORDER BY id
     """
-    combat_log=db.query(sql_player_get_combat_log,[username])[-1]
+    combat_log=db.query(sql_player_get_combat_log,[username])[0]
     result=combat.calculate_attacks(combat_log,"",username)
     return result
+
+def get_world_difficulty(username):
+
+    sql="""
+    SELECT SUM(item_details.item_level) AS levels
+    FROM equipped_items 
+    LEFT JOIN item_details ON item_details.item_id=equipped_items.item_id
+    WHERE equipped_items.player_id=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    """
+    item_levels=db.query(sql,[username])
+
+    if not item_levels[0]["levels"]:
+        return 1
+    difficulty=int(item_levels[0][0]//7)+3
+    return difficulty

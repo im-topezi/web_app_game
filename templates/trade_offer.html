@@ -1,37 +1,90 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Offers{% endblock %}
         
 {% block content %}
 
 <a href="/marketplace">&lt;&lt;</a>
 
-<h2>{{item.item_name}}</h2>
-{%if item.username!=session.username%}
-        <p>     
-            <form action="/offer_trade" method="post">
-                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                <h2>
-                    Compose a trade offer:
-                </h2>
-                <input type="number" name="gold_offer" min="0" max="{{session.gold}}" placeholder="Gold"/>
-                {%if not items%}
-                <div>
-                    You don't have any items
-                </div>
-                {%endif%}
-                {%for user_item in items%}
-                <ul>
-                    {{user_item.item_name}}
-                    <input type="checkbox" name="item_offer" value="{{user_item.id}}"/>
-                </ul>
-                {%endfor%}
-                <input type="submit" value="Send offer"/>
-            </form>
-        </p>
-{%endif%}
+<div class="offers">
+    <h2>Item:</h2>
+            <table>
+                <tr>
+                    <th>Item name</th>
+                    <th>Item type</th>
+                    <th>Item level</th>
+                    <th>Item rarity</th>
+                    <th>Item stats</th>
+                    <th>Item slot</th>
+                    <th>Trader price</th>
+                </tr>
+                
 
+                <tr class="{{item.rarity}}">
+                    <td>{{item.item_name}}</td>
+                    <td>{{item.type}}</td>
+                    <td>{{item.item_level}}</td>
+                    <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
+                    <td>
+                        <ul>
+                            {%if item.magic%}
+                            <li>
+                                Magic: {{item.magic}}
+                            </li>
+                            {%endif%}
+                            {%if item.agility%}
+                            <li>
+                                
+                                Agility: {{item.agility}}
+            
+                            </li>
+                            {%endif%}
+
+                            {%if item.strength%}
+                            <li>
+                                
+                                Strength: {{item.strength}}
+            
+                            </li>
+                            {%endif%}
+                            {%if item.stamina%}
+                            <li>
+                                Stamina: {{item.stamina}}
+                            </li>
+                            {%endif%}
+                            {%if item.armor%}
+                            <li>
+                                
+                                Armor: {{item.armor}}
+            
+                            </li>
+                            {%endif%}
+                        </ul>
+                        {%if item.slot=="Weapon"%}
+                        <ul>
+                            <li>
+                                Damage: {{item.min_damage}}-{{item.max_damage}}
+                            </li>
+                            <li>
+                                Speed: {{item.weapon_speed}}
+                            </li>
+                            <li>
+                                Damage styles: {{item.damage_style}} {%if item.secondary_style%}/ {{item.secondary_style}} {%endif%}
+                            </li>
+                        </ul>
+                        {%endif%}
+
+                    </td>
+                    <td>{{item.slot}}</td>
+                    <td>{{item.trader_price}}</td>
+
+                </tr>
+    
+            </table>
+
+            
+</div>
+<div class="offers">
 <h2>
     Offers for this item
 </h2>
@@ -72,5 +125,111 @@
 </table>
 {%else%}
 <ul>No offers for this item</ul>
+
 {%endif%}
+
+</div>
+
+{%if item.username!=session.username%}
+        <div class="offers">     
+            <form action="/offer_trade" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="item_id" value="{{item.id}}"/>
+                <h2>
+                    Compose a trade offer:
+                </h2>
+                <input type="number" name="gold_offer" min="0" max="{{session.gold}}" placeholder="Gold"/>
+                {%if not items%}
+                <div>
+                    You don't have any items
+                </div>
+                {%else%}
+
+                
+                <div>
+                    <table>
+                        <tr>
+                            <th>Item name</th>
+                            <th>Item type</th>
+                            <th>Item level</th>
+                            <th>Item rarity</th>
+                            <th>Item stats</th>
+                            <th>Item slot</th>
+                            <th>Trader price</th>
+                        </tr>
+                        {% for user_item in items %}
+
+                        <tr class="{{user_item.rarity}}">
+                            <td>{{user_item.item_name}}</td>
+                            <td>{{user_item.type}}</td>
+                            <td>{{user_item.item_level}}</td>
+                            <td><div class="{{user_item.rarity}}">{{user_item.rarity}}</div></td>
+                            <td>
+                                <ul>
+                                    {%if user_item.magic%}
+                                    <li>
+                                        Magic: {{user_item.magic}}
+                                    </li>
+                                    {%endif%}
+                                    {%if user_item.agility%}
+                                    <li>
+                                        
+                                        Agility: {{user_item.agility}}
+                    
+                                    </li>
+                                    {%endif%}
+
+                                    {%if user_item.strength%}
+                                    <li>
+                                        
+                                        Strength: {{user_item.strength}}
+                    
+                                    </li>
+                                    {%endif%}
+                                    {%if user_item.stamina%}
+                                    <li>
+                                        Stamina: {{user_item.stamina}}
+                                    </li>
+                                    {%endif%}
+                                    {%if user_item.armor%}
+                                    <li>
+                                        
+                                        Armor: {{user_item.armor}}
+                    
+                                    </li>
+                                    {%endif%}
+                                </ul>
+                                {%if user_item.slot=="Weapon"%}
+                                <ul>
+                                    <li>
+                                        Damage: {{user_item.min_damage}}-{{user_item.max_damage}}
+                                    </li>
+                                    <li>
+                                        Speed: {{user_item.weapon_speed}}
+                                    </li>
+                                    <li>
+                                        Damage styles: {{user_item.damage_style}} {%if user_item.secondary_style%}/ {{user_item.secondary_style}} {%endif%}
+                                    </li>
+                                </ul>
+                                {%endif%}
+
+                            </td>
+                            <td>{{user_item.slot}}</td>
+                            <td>{{user_item.trader_price}}</td>
+                            <td>
+                                <input type="checkbox" name="item_offer" value="{{user_item.id}}"/>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+
+                    
+                </div>
+                {%endif%}
+                <input type="submit" value="Send offer"/>
+            </form>
+        </div>
+{%endif%}
+
+
 {% endblock %}

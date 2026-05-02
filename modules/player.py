@@ -18,7 +18,7 @@ def update_max_health(username):
     old_health=get_health_amount(username)
     stats=get_total_stats(username)
     max_health=100+(stats["stamina"]*10)
-    if old_health["current"]==old_health["max"]:
+    if old_health["current"]==old_health["max"] or old_health["current"]>max_health:
         sql="""
         UPDATE users
         SET max_health=?,health=?
@@ -220,13 +220,42 @@ def set_stats(username,agility,magic,stamina,strength,total_stats):
     else:
         return "All skillpoints have already been spent"
     
-def drink_health_potion(item_id):
-    pass
+def drink_health_potion(item,username):
+    stats=get_total_stats(username)
+    healed_amount=item["item_level"]*2+50+stats["magic"]*3
+    health=get_health_amount(username)
+    healed_health=healed_amount+health["current"]
+    if healed_health>health["max"]:
+        healed_health=health["max"]
+    heal_sql="""
+    UPDATE users
+    SET health=?
+    WHERE username=?
+    """
+    db.execute(heal_sql,[healed_health,username])
+    drop_item(item["id"],username)
+    return f"You heal for {healed_health-health["current"]} health"
     
+def deal_damage_to_player(username,damage):
+    health=get_health_amount(username)
+    if damage>=health["current"]:
+        sql_deal_damage_to_player="""
+        UPDATE users
+        SET health=1
+        WHERE username=?
+        """
+        result=db.execute(sql_deal_damage_to_player,[username])
+    else:
+        sql_deal_damage_to_player="""
+        UPDATE users
+        SET health=health-?
+        WHERE username=?
+        """
+        result=db.execute(sql_deal_damage_to_player,[damage,username])
 
 def use_item(item_id,username):
     sql="""
-    SELECT items.id,items.player,items.item_name,item_slots.slot_name AS slot
+    SELECT items.id,items.player,items.item_name,item_slots.slot_name AS slot,item_level
     FROM items 
     LEFT JOIN marketplace_listings ON marketplace_listings.item_id=items.id
     LEFT JOIN offered_items ON offered_items.item_id=items.id
@@ -245,7 +274,7 @@ def use_item(item_id,username):
     if result:
         item=result[0]
         if item["item_name"]=="Health Potion":
-            drink_health_potion(item_id)
+            return drink_health_potion(item,username)
         elif item["slot"]:
             sql_get_slot_information="""
             SELECT item_id
@@ -283,7 +312,7 @@ def use_item(item_id,username):
 
 def check_if_in_combat(username):
     sql="""
-    SELECT npc_id,combat_action,damage,style,player_swing_timer,npc_swing_timer,damage_type
+    SELECT npc_id,combat_action,damage,style,player_swing_timer,npc_swing_timer,damage_type,attacker
     FROM combat_log
     LEFT JOIN damage_styles ON damage_style=damage_styles.id
     LEFT JOIN damage_types ON damage_styles.type_id=damage_types.id
@@ -291,7 +320,17 @@ def check_if_in_combat(username):
     SELECT id
     FROM users
     WHERE username=?)
-    ORDER BY combat_log.id
+    ORDER BY combat_log.id DESC
     """
     result=db.query(sql,[username])
     return result
+
+def delete_combat_log(username):
+    sql="""
+    DELETE FROM combat_log
+    WHERE player_id=(
+    SELECT id
+    FROM users
+    WHERE username=?)
+    """
+    db.execute(sql,[username])

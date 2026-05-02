@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Player page{% endblock %}
         
 {% block content %}
 
@@ -10,10 +10,11 @@
 <div class="stat_menu">
 {% for value in info %}
 <h2>{{value.username}}</h2>
+
 <ul>{{value.username}}'s gold: {{value.gold}}</ul>
 {%if value.username==session.username and not value.set_stats%}
 <form action="/set_stats" method="post">
-
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
     <ul><i>You have {{15-value.total_stats}} unspent skillpoints</i></ul>
 <table>
     <tr>
@@ -34,7 +35,7 @@
         <td>
             <div class="tooltip">Strength
                  <span class="tooltiptext">
-                    Strength affects your ability to pierce armor with melee weapons. It is also required to wield heavy weapons effectivly.
+                    Strength affects your damage with melee weapons. You also need strength to wield metal armor, axes and maces effectivly.
                  </span>
             </div>
         </td>
@@ -44,7 +45,7 @@
             <td>
                 <div class="tooltip">Agility
                     <span class="tooltiptext">
-                        Agility affects your effectivness with light melee weapons and also your ability to dodge attacks.
+                        Agility determines your hit chance with melee weapons and also your ability to dodge attacks.
                     </span>
                 </div>
             </td>
@@ -54,7 +55,7 @@
         <td>
             <div class="tooltip">Magic
                  <span class="tooltiptext">
-                    Magic determines your ability with magical weapons and items.
+                    Magic affects your damage and hit chance with magic weapons. It also boosts your potion effects.
                  </span>
             </div>
         </td>
@@ -616,7 +617,7 @@
     </tr>
 </table>
 
-<h2>Inventory:</h2> 
+<h2>Listings:</h2> 
 {%if items%}
     <table>
         <tr>
@@ -688,6 +689,8 @@
             <td>{{item.slot}}</td>
             <td>{{item.trader_price}}</td>
             <td>
+                {{item.category}}
+                {%if item.category=="Want offers"%}
                 <form action="/offer_trade" method="get">
                     <input type="hidden" name="item_id" value="{{item.id}}"/>
                     {% for value in info %}
@@ -699,12 +702,13 @@
                     {%endif%}
                     {%endfor%}
                 </form>
+                {%endif%}
             </td>
         </tr>
         {% endfor %}
     </table>
 {%else%}
-<ul>Player doesn't have any items</ul>
+<ul>Player doesn't have any items listed</ul>
 {%endif%}
 
 

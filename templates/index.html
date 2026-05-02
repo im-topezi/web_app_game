@@ -1,17 +1,15 @@
 {% extends "layout.html" %}
     
-{% block title %}Welcome to game{% endblock %}
+{% block title %}Home{% endblock %}
         
 {% block content %}
 
-    Welcome
-    {%if session.username %}
-    {{session.username}}
-    <div>
-        <a href="/marketplace"><button>Marketplace</button></a>
-    </div>
-    
-
+    <div class="welcome"><h2>
+        Welcome
+        {%if session.username %}
+        {{session.username}}
+    </h2></div>
+    <div class="combat_log">
     <form action="/new_world" method="post">
         World name:
         <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
@@ -21,31 +19,31 @@
     
 
     {%for world in worlds%}
-    <div>
-        World name:
-        <b>{{world.world_name}}</b>
-        <div><i>id:{{world.id}}</i></div>
-        <div>Difficulty: {{world.difficulty}}</div>
-        <div>
-            {%if world.visited%}
-            <div>You have visited this world before!</div>
-            {%else%}
-            <div>You haven't visited this world yet!</div>
-            {%endif%}
+        <div class="world_list">
+            World name:
+            <b>{{world.world_name}}</b>
+            <div><i>id:{{world.id}}</i></div>
+            <div>Difficulty: {{world.difficulty}}</div>
+            <div>
+                {%if world.visited%}
+                <div>You have visited this world before!</div>
+                {%else%}
+                <div>You haven't visited this world yet!</div>
+                {%endif%}
+            </div>
+            <form action="/play" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="world_id" value="{{world.id}}"/>
+                <input type="submit" value="Play!"/>
+            </form>
+            <form action="/delete" method="post">
+                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                <input type="hidden" name="world_id" value="{{world.id}}"/>
+                <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to destroy this world?')"/>
+            </form>
         </div>
-        <form action="/play" method="post">
-            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-            <input type="hidden" name="world_id" value="{{world.id}}"/>
-            <input type="submit" value="Play!"/>
-        </form>
-        <form action="/delete" method="post">
-            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-            <input type="hidden" name="world_id" value="{{world.id}}"/>
-            <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to destroy this world?')"/>
-        </form>
-    </div>
     {%endfor%}
-
+    </div>
 
     {%endif%}
 {% endblock %}
