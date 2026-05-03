@@ -1,5 +1,5 @@
 # web_app_game
-The goal is to make a website that functions as a small text based RPG game.
+The goal is to make a website that functions as a small text based RPG game. No AI was used in the making of this project.
 
 Course requirements:
 - [x] Players can register 
