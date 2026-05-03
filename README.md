@@ -59,3 +59,8 @@ Now install the flask using command `$ pip install flask`
 Install database schema with command `$ sqlite3 game_database.db < schema.sql`
 
 Start hosting the web application `$ flask run`
+
+FOR TESTING:
+If you don't wanna play the game, but wanna test some of the features like the marketplace. Register an account and log in. Generate some worlds. After this run the command `$ sqlite3 game_database.db < items.sql`
+
+This will add all the items that have been generated to your inventory and give all accounts 1000 gold. Note that these items are taken from the npcs, so the generated worlds wont have any loot. Delete these world and generate new ones if you wish test the game with your new items.
