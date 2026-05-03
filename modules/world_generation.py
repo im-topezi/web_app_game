@@ -255,12 +255,7 @@ class NPC:
     def generate_items(self,world_level):
         stats=world_level
         if self.type["npc_type"] in ("Human","Skeleton"):
-            
-            sql_get_slots="""
-            SELECT slot_name
-            FROM item_slots
-            """
-            slots=db.query(sql_get_slots)
+            slots=marketplace.get_item_slots()
             weapon_stats=random.randint(1,stats)
             stats-=weapon_stats
             weapon=Item(world_level,{"id":self.id,"location":"npc"})
