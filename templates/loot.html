@@ -6,6 +6,7 @@
 
 <a href="/play">&lt;&lt;</a>
 {%if container_id%}
+{%if items%}
 <div>
     <table>
         <tr>
@@ -91,6 +92,9 @@
 
     
 </div>
+{%else%}
+<h1>No items</h1>
+{%endif%}
 {%endif%}
 
 {%if npc_id%}

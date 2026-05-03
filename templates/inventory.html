@@ -66,7 +66,12 @@
         <td class="equip">
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Head"%}
-            <div class="equipment">Head
+            <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Head"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -111,7 +116,7 @@
                     </tr>
                     </table>
                  </span>
-            
+            </div>
             {%endif%}
             {%endfor%}
         </td>
@@ -123,7 +128,12 @@
         <td class="equip" colspan="3">
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Shoulders"%}
-                <div class="equipment">Shoulders
+                <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Shoulders"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -171,6 +181,7 @@
                     </tr>
                     </table>
                  </span>
+                </div>
             {%endif%}
             {%endfor%}
 
@@ -184,7 +195,12 @@
         <td class="equip" rowspan="2">
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Chest"%}
-            <div class="equipment">Chest
+            <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Chest"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -232,6 +248,7 @@
                     </tr>
                     </table>
                  </span>
+                </div>
             {%endif%}
             {%endfor%}
             
@@ -245,7 +262,12 @@
         <td class="equip">
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Weapon"%}
-            <div class="equipment">Weapon
+            <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Weapon"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -309,6 +331,7 @@
                     </tr>
                     </table>
                  </span>
+                 </div>
             {%endif%}
             {%endfor%}
             
@@ -316,7 +339,12 @@
         <td class="equip">
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Hands"%}
-            <div class="equipment">Hands
+            <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Hands"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -364,6 +392,7 @@
                     </tr>
                     </table>
                  </span>
+                 </div>
             {%endif%}
             {%endfor%}
         </td>
@@ -376,7 +405,12 @@
         <td class="equip" rowspan="2">
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Legs"%}
-            <div class="equipment">Legs
+            <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Legs"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -425,6 +459,7 @@
                     </tr>
                     </table>
                  </span>
+                </div>
             {%endif%}
             {%endfor%}
             
@@ -446,7 +481,12 @@
         <td class="equip" colspan="3" >
             {%for worn_item in worn_items%}
             {%if worn_item.slot=="Feet"%}
-            <div class="equipment">Feet
+            <div class="equipment">
+                <form action="/unequip" method="post" class="unequip">
+                    <input type="hidden" name="item_id" value="{{worn_item.id}}"/>
+                    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                    <input type="submit" value="Feet"/>
+                </form>
                  <span class="equipment_info">
                     <table>
                     <tr class="{{worn_item.rarity}}">
@@ -495,6 +535,7 @@
                     </tr>
                     </table>
                  </span>
+                </div>
             {%endif%}
             {%endfor%}
             
@@ -507,7 +548,7 @@
 <div>
     You don't have any items
 </div>
-{%endif%}
+{%else%}
 
 
         <div>
@@ -595,7 +636,12 @@
                         {%if not session.location%}
                         <form action="/sell" method="get">
                             <input type="hidden" name="item_id" value="{{item.id}}"/>
-                            <input type="submit" value="Sell"/>
+                            <input type="submit" value="List to the marketplace"/>
+                        </form>
+                        <form action="/sell_blackmarket" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+                            <input type="hidden" name="item_id" value="{{item.id}}"/>
+                            <input type="submit" value="Sell to the blackmarket" onclick="return confirm('Sell this item for {{item.trader_price}}?')"/>
                         </form>
                         {%endif%}
                     </td>
@@ -605,5 +651,5 @@
 
             
         </div>
-
+{%endif%}
 {% endblock %}

@@ -12,25 +12,25 @@ Goals for the project:
 - [x] Players can drop items from their inventory
 - [ ] Player attribute system
     - [x] Players have attributes
-    - [ ] Players get attributes from items
+    - [x] Players get attributes from items
 - [x] Player home page with stats about the player
 - [x] World system
     - [x] Players can move in the world
     - [x] Worlds are automaticly generated
-        - [ ] NPC's are generated from certain parameters
-        - [ ] Items are generated from certain parameters
-- [ ] Players can interact with NPC's
-    - [ ] Combat system
-        - [ ] Players can fight NPC's
-    - [ ] Players can loot NPC's
-    - [ ] Players can pickpocket NPC's
+        - [x] NPC's are generated from certain parameters
+        - [x] Items are generated from certain parameters
+- [x] Players can interact with NPC's
+    - [x] Combat system
+        - [x] Players can fight NPC's
+    - [x] Players can loot NPC's
+    - [x] Players can pickpocket NPC's
 - [x] Marketplace system
     - [x] Players can post trade offers to other players items
-    - [ ] Items have categories
+    - [x] Items have categories
     - [x] Marketplace has a search option
-        - [ ] Search can filter with categories
+        - [x] Search can filter with categories
     - [x] Gold system
-        - [ ] Players can loot gold and sell items to certain NPC's
+        - [x] Players can loot gold and sell items on the blackmarket
     - [x] Players can sell items they loot to other players through a marketplace system
 
 

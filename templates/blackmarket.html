@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
     
-{% block title %}Marketplace{% endblock %}
+{% block title %}Blackmarket{% endblock %}
         
 {% block content %}
 <a href="/">&lt;&lt;</a>
 
-<form action="/marketplace" method="get">
+<form action="/blackmarket" method="get">
     <div>
         <input type="text" name="query" value="{{query.keyword}}" placeholder="Search..."/>
         Agility:
@@ -52,7 +52,6 @@
     <table>
                 <tr>
                     <th>Item name</th>
-                    <th>Marketplace price</th>
                     <th>Item type</th>
                     <th>Item level</th>
                     <th>Item rarity</th>
@@ -64,7 +63,6 @@
 
                 <tr class="{{item.rarity}}">
                     <td>{{item.item_name}}</td>
-                    <td>{{item.marketplace_price}}</td>
                     <td>{{item.type}}</td>
                     <td>{{item.item_level}}</td>
                     <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
@@ -121,36 +119,14 @@
                     <td>{{item.slot}}</td>
                     <td>{{item.trader_price}}</td>
                     <td>
-                        {%if item.username!=session.username%}
-                        <form action="/buy" method="post" >
+
+                        <form action="/buy_from_blackmarket" method="post" >
                             <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
                             <input type="hidden" name="item_id" value="{{item.id}}"/>
-                            <input type="hidden" name="seller" value="{{item.username}}"/>
-                            <input type="submit" value="Buy" onclick="return confirm('Buy {{item.item_name}} for {{item.marketplace_price}}?')" />
+                            <input type="submit" value="Buy" onclick="return confirm('Buy {{item.item_name}} for {{item.trader_price}}?')" />
                         </form>
-                        {%else%}
-                            (Your listing)
-                            <form action="/cancel" method="post" >
-                                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                                <input type="submit" value="Cancel" onclick="return confirm('Cancel the listing for {{item.item_name}} ?')" />
-                            </form>
-                            <form action="/modify" method="get" >
-                                <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-                                <input type="hidden" name="item_id" value="{{item.id}}"/>
-                                <input type="submit" value="Modify" />
-                            </form>
-                        {%endif%}
-                        {%if item.category=="Want offers"%}
-                        <form action="/offer_trade" method="get">
-                            <input type="hidden" name="item_id" value="{{item.id}}"/>
-                            {%if item.username!=session.username%}
-                            <input type="submit" value="Offer a trade"/>
-                            {%else%}
-                            <input type="submit" value="See offers"/>
-                            {%endif%}
-                        </form>
-                        {%endif%}
+
+                        
                     </td>
                 </tr>
                 {% endfor %}

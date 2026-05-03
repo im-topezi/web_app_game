@@ -9,19 +9,53 @@ class Offer:
         self.buyer_id=buyer_id
         self.gold_offer=gold_offer
         self.buyer_name=buyer_username
+        self.details=get_item_details(self.item_id)[0]
         self.offered_items=[]
         self.get_offered_items()
     
     def get_offered_items(self):
         sql="""
-        SELECT items.item_name
+        SELECT items.id,items.player,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
         FROM offered_items
-        LEFT JOIN items ON item_id=items.id
+        LEFT JOIN items ON offered_items.item_id=items.id
+        LEFT JOIN item_details ON item_details.item_id=items.id
+        LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+        LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+        LEFT JOIN item_slots ON item_details.slot=item_slots.id
+        LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
         WHERE offer_id=?
         """
+
         self.offered_items=db.query(sql,[self.id])
 
 
+def form_query(arguments):
+    keyword=arguments.get("query")
+    stamina=arguments.get("stamina")
+    agility=arguments.get("agility")
+    strength=arguments.get("strength")
+    magic=arguments.get("magic")
+    item_level=arguments.get("item_level")
+    item_slot=arguments.get("slot")
+    query={
+        "stamina":1 if stamina else 0,
+        "agility":1 if agility else 0,
+        "strength":1 if strength else 0,
+        "magic":1 if magic else 0,
+        "item_level":item_level if item_level else 0,
+        "item_slot":item_slot if item_slot else "",
+        "keyword": keyword if keyword else ""
+    }
+    return query
+
+def get_item_slots():
+    sql_get_slots="""
+    SELECT slot_name
+    FROM item_slots
+    WHERE slot_name IS NOT "Potion"
+    """
+    slots=db.query(sql_get_slots)
+    return slots
 
 def get_player_id(username):
     sql="""
@@ -32,16 +66,6 @@ def get_player_id(username):
     result=db.query(sql,[username])
     return result[0]["id"]
 
-def check_balance(item_id,username):
-    sql="""
-    SELECT users.id 
-    FROM users 
-    WHERE users.username=? AND 
-    users.gold>=(SELECT items.marketplace_price 
-    FROM items WHERE items.id=?)
-    """
-    result=db.query(sql,[username,item_id])
-    return result[0] if result else False
 
 def get_offer_options():
     sql="""
@@ -51,8 +75,6 @@ def get_offer_options():
     return db.query(sql)
 
 def get_listed_items(query):
-    if not query:
-        query=""
     sql="""SELECT items.id,items.item_name,items.player,marketplace_listings.marketplace_price,users.username,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style,marketplace_categories.category
     FROM marketplace_listings
     LEFT JOIN items ON marketplace_listings.item_id=items.id
@@ -65,8 +87,36 @@ def get_listed_items(query):
     LEFT JOIN marketplace_categories ON marketplace_listings.marketplace_category=marketplace_categories.id
     WHERE marketplace_listings.seller_id=users.id
     AND items.item_name LIKE ?
+    AND item_slots.slot_name LIKE ? 
+    AND stat_sheet.agility>=?
+    AND stat_sheet.magic>=?
+    AND stat_sheet.stamina>=?
+    AND stat_sheet.strength>=?
+    AND item_details.item_level>=?
     """
-    result=db.query(sql,["%"+ query +"%"])
+    result=db.query(sql,["%"+ query["keyword"] +"%","%"+ query["item_slot"] +"%",query["agility"],query["magic"],query["stamina"],query["strength"],query["item_level"]])
+    return result
+
+def get_blackmarket_items(query):
+    sql="""SELECT items.id,items.item_name,item_subcategories.subcategory_name AS type,item_details.trader_price,item_slots.slot_name AS slot, item_details.rarity AS rarity,item_details.item_level,stat_sheet.agility,stat_sheet.stamina,stat_sheet.strength,stat_sheet.magic,stat_sheet.armor,weapon_details.min_damage,weapon_details.max_damage,weapon_details.weapon_speed,(SELECT style FROM damage_styles WHERE id=weapon_details.damage_style) AS damage_style,(SELECT style FROM damage_styles WHERE id=weapon_details.secondary_style) AS secondary_style
+    FROM items
+    LEFT JOIN item_details ON item_details.item_id=items.id
+    LEFT JOIN weapon_details ON weapon_details.item_id=items.id
+    LEFT JOIN stat_sheet ON stat_sheet.item_id=items.id
+    LEFT JOIN item_slots ON item_details.slot=item_slots.id
+    LEFT JOIN item_subcategories ON item_details.item_type=item_subcategories.id
+    WHERE player IS NULL
+    AND npc IS NULL
+    AND container IS NULL
+    AND items.item_name LIKE ?
+    AND item_slots.slot_name LIKE ?
+    AND stat_sheet.agility>=?
+    AND stat_sheet.magic>=?
+    AND stat_sheet.stamina>=?
+    AND stat_sheet.strength>=?
+    AND item_details.item_level>=?
+    """
+    result=db.query(sql,["%"+ query["keyword"] +"%","%"+ query["item_slot"] +"%",query["agility"],query["magic"],query["stamina"],query["strength"],query["item_level"]])
     return result
 
 def get_user_listings(username):
@@ -95,6 +145,50 @@ def check_item_owner(item_id,username):
     AND(SELECT id FROM users WHERE users.username=?)=items.player
     """
     return db.query(sql,[item_id,username])
+
+def buy_item_from_blackmarket(item_id,username):
+    sql_transfer_item="""
+    UPDATE items
+    SET player=(SELECT id 
+    FROM users 
+    WHERE users.username=?)
+    WHERE id=?
+    AND (SELECT gold 
+    FROM users 
+    WHERE users.username=?)>=(SELECT trader_price
+    FROM item_details
+    WHERE item_id=?)
+    AND player IS NULL
+    AND npc IS NULL
+    AND container IS NULL
+    """
+    result=db.execute(sql_transfer_item,[username,item_id,username,item_id])
+    if result["rows_affected"]==1:
+        sql_money="""
+        UPDATE users
+        SET gold=gold-(SELECT trader_price
+        FROM item_details
+        WHERE item_id=?)
+        WHERE username=?
+        """
+        result=db.execute(sql_money,[item_id,username])
+        if result["rows_affected"]==1:
+            return "Item bought"
+    else:
+        sql_check_gold="""
+        SELECT gold>=(SELECT trader_price
+        FROM item_details
+        WHERE item_id=?) AS enough_gold
+        FROM users 
+        WHERE users.username=?
+        """
+        enough_gold=db.query(sql_check_gold,[item_id,username])[0]["enough_gold"]
+        if not enough_gold:
+            return "You dont have enough gold"
+        else:
+            return "Item not available"
+
+
 
 def check_item_is_listed(item_id,username):
     sql="""
@@ -231,6 +325,13 @@ def check_trader_wants_offers(item_id):
     """
     return db.query(sql,[item_id])
 
+def check_item_can_be_sold(item_id,username):
+        if check_item_owner(item_id,username):
+            if not check_item_is_not_worn(item_id):
+                if not check_item_listed(item_id):
+                    if not check_item_not_in_offer(item_id):
+                        return True
+
 def check_item_listed(item_id):
     sql="""
     SELECT marketplace_listings.id
@@ -282,14 +383,16 @@ def get_my_offers(username):
     player_id=get_player_id(username)
     offers=[]
     sql="""
-    SELECT trade_offers.id,sold_item,buyer_id,gold_offer,items.item_name,player
+    SELECT trade_offers.id,sold_item,buyer_id,gold_offer,items.item_name,player,(SELECT username
+    FROM users
+    WHERE id=items.player) AS seller_name
     FROM trade_offers
     LEFT JOIN items ON items.id=trade_offers.sold_item
     WHERE buyer_id=?
     """
     my_offers=db.query(sql,[player_id])
     for offer in my_offers:
-        offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],))
+        offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],offer["seller_name"]))
     return offers
 
 
@@ -297,14 +400,16 @@ def get_offers_for_me(username):
     player_id=get_player_id(username)
     offers=[]
     sql="""
-    SELECT trade_offers.id,sold_item,player,buyer_id,gold_offer,items.item_name
+    SELECT trade_offers.id,sold_item,player,buyer_id,gold_offer,items.item_name,(SELECT username
+    FROM users
+    WHERE id=trade_offers.buyer_id) AS buyer_name
     FROM trade_offers
     LEFT JOIN items ON items.id=trade_offers.sold_item
     WHERE player=?
     """
     my_offers=db.query(sql,[player_id])
     for offer in my_offers:
-        offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"]))
+        offers.append(Offer(offer["id"],offer["buyer_id"],offer["sold_item"],offer["item_name"],offer["gold_offer"],offer["buyer_name"]))
     return offers
 
 def get_offers_for_item(item_id):

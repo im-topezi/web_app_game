@@ -10,14 +10,14 @@
     <div>
         {% for message in get_flashed_messages() %}
         <p>
-            <b>{{ message }}</b>
+            <h2>{{ message }}</h2>
         </p>
         {% endfor %}
     </div>
 
   <div class="nav">
     <nav>
-        {%if session.location%}
+        {%if session.location and not session.in_combat%}
         <ul>
             <form action="/leave" method="post">
                 <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
@@ -29,15 +29,16 @@
             {%if not session.location%}
             <ul><a href="/my_offers"><button>My offers</button></a></ul>
             <ul><a href="/marketplace"><button>Marketplace</button></a></ul>
+            <ul><a href="/blackmarket"><button>Blackmarket</button></a></ul>
             <ul><a href="/player/{{session.username}}"><button>Player page</button></a></ul>
             <ul><a href="/how"><button>How to play</button></a></ul>
             {%endif%}
         <ul><a href="/logout"><button>Logout</button></a></ul>
         <ul><a href="/inventory"><button>Inventory</button></a></ul>
-        <h2><i>Gold</i> {{session.gold}}</h2>
+        <h2>Gold {{session.gold}}</h2>
         <div class="health">
-            Health
-            <div>{{session.health}}/{{session.max_health}}</div>
+            
+            <h2>Health {{session.health}}/{{session.max_health}}</h2>
         </div>
         {% else %}
         <ul><a href="/how"><button>How to play</button></a></ul>

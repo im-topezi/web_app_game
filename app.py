@@ -38,6 +38,7 @@ def cant_be_in_combat(f):
         if session.get("username"):
             combat=player.check_if_in_combat(session["username"])
             if combat:
+                session["in_combat"]=True
                 return redirect("/combat")
         return f(*args, **kwargs)
     return decorated_function
@@ -59,6 +60,9 @@ def check_csrf():
 @app.before_request
 def set_player_details():
     if session.get("username"):
+        if not player.check_player_exists(session["username"]):
+            session.clear()
+            return redirect("/")
         gold=marketplace.get_gold_amount(session["username"])
         session["gold"]=gold
         health=player.get_health_amount(session["username"])
@@ -125,6 +129,7 @@ def how():
 @app.route("/inventory")
 @login_required
 def inventory():
+
     items=player.get_player_items(session["username"])
     worn_items=player.get_equipped_items(session["username"])
     stats=player.get_total_stats(session["username"])
@@ -141,6 +146,9 @@ def loot():
         if game.check_container_location(container_id,session["location"]):
             if not game.check_enemies_in_the_tile(container_id):
                 items=game.get_container_items(container_id)
+                result=game.loot_gold_container(container_id,session["username"])
+                if result:
+                    flash(result)
                 return render_template("loot.html",items=items,container_id=container_id)
             else:
                 flash("You must defeat all the enemies in the tile to loot that")
@@ -172,6 +180,9 @@ def loot_npc():
         if game.check_npc_location(npc_id,session["username"]):
             if not game.check_npc_is_alive(npc_id):
                 items=game.get_npc_items(npc_id)
+                result=game.loot_gold_npc(npc_id,session["username"])
+                if result:
+                    flash(result)
                 return render_template("loot.html",items=items,npc_id=npc_id)
             else:
                 flash("You must defeat the enemy to loot them")
@@ -212,9 +223,45 @@ def drop():
 @login_required
 @cant_be_in_game
 def use_marketplace():
-    query=request.args.get("query")
+    query=marketplace.form_query(request.args)
     items=marketplace.get_listed_items(query)
-    return render_template("marketplace.html",items=items)
+    slots=marketplace.get_item_slots()
+    return render_template("marketplace.html",items=items,slots=slots,query=query)
+
+@app.route("/blackmarket")
+@login_required
+@cant_be_in_game
+def blackmarket():
+    query=marketplace.form_query(request.args)
+    items=marketplace.get_blackmarket_items(query)
+    slots=marketplace.get_item_slots()
+    return render_template("blackmarket.html",items=items,slots=slots,query=query)
+
+@app.route("/sell_blackmarket",methods=["POST"])
+@login_required
+@cant_be_in_game
+def sell_blackmarket():
+    check_csrf()
+    item_id=request.form["item_id"]
+    item=marketplace.check_item_owner(item_id,session["username"])
+    if marketplace.check_item_can_be_sold(item_id,session["username"]):
+        player.sell_item_on_blackmarket(item_id,session["username"])
+        flash(f"{item[0]['item_name']} has been sold to the blackmarket")
+        return redirect("/inventory")
+    else:
+        abort(403)
+
+@app.route("/buy_from_blackmarket",methods=["POST"])
+@login_required
+@cant_be_in_game
+def buy_from_blackmarket():
+    item_id=request.form["item_id"]
+    result=marketplace.buy_item_from_blackmarket(item_id,session["username"])
+    flash(result)
+    return redirect("/blackmarket")
+
+        
+
 
 
 @app.route("/sell",methods=["GET","POST"])
@@ -224,8 +271,7 @@ def sell():
     if request.method=="GET":
         item_id=request.args.get("item_id")
         item=marketplace.check_item_owner(item_id,session["username"])
-        #MAKE ANOTHER CHECK HERE
-        if item:
+        if marketplace.check_item_can_be_sold(item_id,session["username"]):
             offer_options=marketplace.get_offer_options()
         
             return render_template("sell.html",item=item[0],offer_options=offer_options)
@@ -240,8 +286,7 @@ def sell():
             flash("Price has to be more than 0")
             return redirect("/inventory")
         item=marketplace.check_item_owner(item_id,session["username"])
-        #MAKE ANOTHER CHECK HERE
-        if item:
+        if marketplace.check_item_can_be_sold(item_id,session["username"]):
             result=marketplace.put_item_for_sale(item_id,market_price,category)
             if result["rows_affected"]==1:
                 flash(f"{item[0]['item_name']} has been listed to the marketplace")
@@ -403,11 +448,20 @@ def delete_world():
 
 @app.route("/use",methods=["POST"])
 @login_required
-@cant_be_in_combat
 def use_items():
     check_csrf()
     item_id=request.form["item_id"]
     result=player.use_item(item_id,session["username"])
+    player.update_max_health(session["username"])
+    flash(result)
+    return redirect("/inventory")
+
+@app.route("/unequip",methods=["POST"])
+@login_required
+def unequip_items():
+    check_csrf()
+    item_id=request.form["item_id"]
+    result=player.unequip_item(item_id,session["username"])
     player.update_max_health(session["username"])
     flash(result)
     return redirect("/inventory")
@@ -497,6 +551,26 @@ def set_stats():
     flash(result)
     return redirect(request.referrer)
 
+@app.route("/pickpocket",methods=["POST"])
+@login_required
+@must_be_in_game
+@cant_be_in_combat
+def pickpocket():
+    check_csrf()
+    npc_id=request.form["npc_id"]
+    if game.check_npc_is_alive(npc_id) and game.check_npc_location(npc_id,session["username"]):
+        if session["health"]>1:
+            result=game.try_pickpocket(npc_id,session["username"])
+            if result:
+                flash(f"You succesfully steal {result} gold")
+                return redirect("/play")
+            else:
+                flash("You are caught while stealing")
+                game.create_combat_encounter(npc_id,session["username"])
+                return redirect("/combat")
+        else:
+            flash("You are too wounded to steal")
+            return redirect("/play")
 
 @app.route("/combat",methods=["POST","GET"])
 @login_required
@@ -522,6 +596,7 @@ def combat():
     if request.method=="GET":
         result=player.check_if_in_combat(session["username"])
         if result:
+            session["in_combat"]=True
             npc_id=result[0]["npc_id"]
             player_stats=player.get_total_stats(session["username"])
             player_items=player.get_equipped_items(session["username"])
@@ -541,15 +616,18 @@ def combat_action():
     check_csrf()
     result=game.combat_attack_sequence(request.form,session["username"])
     flash(result)
-    if result=="Combat continues":
+    if result=="Combat continues" or result=="Can't attack with that style":
         return redirect("/combat")
     elif result=="You are greatly wounded":
         flash("You flee the battle")
         player.delete_combat_log(session["username"])
+        del session["in_combat"]
         return redirect("/play")
     elif result=="Enemy defeated":
         player.delete_combat_log(session["username"])
+        del session["in_combat"]
         return redirect("/play")
+
 
 
 @app.route("/flee",methods=["POST"])
@@ -558,6 +636,7 @@ def combat_action():
 def flee():
     check_csrf()
     flash("You flee the battle")
+    del session["in_combat"]
     player.deal_damage_to_player(session["username"],50)
     player.delete_combat_log(session["username"])
     return redirect("/play")

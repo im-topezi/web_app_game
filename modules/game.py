@@ -50,12 +50,12 @@ def tile_details(tile_id):
 
 
     sql_npc="""
-    SELECT * 
+    SELECT id,npc_name,tile,npc_type_id,health,alive,gold
     FROM npcs 
     WHERE tile=?
     """
     sql_container="""
-    SELECT * 
+    SELECT id,container_type,tile 
     FROM containers 
     WHERE tile=?
     """
@@ -373,19 +373,6 @@ def combat_attack_sequence(form_data,username):
     return result
 
 
-def combat_use_items(item_id,username):
-    player.use_item(item_id,username)
-    sql_player_get_combat_log="""
-    SELECT npc_id,player_id,player_swing_timer,npc_swing_timer
-    FROM combat_log
-    WHERE player_id=(SELECT id 
-        FROM users
-        WHERE username=?)
-    ORDER BY id
-    """
-    combat_log=db.query(sql_player_get_combat_log,[username])[0]
-    result=combat.calculate_attacks(combat_log,"",username)
-    return result
 
 def get_world_difficulty(username):
 
@@ -403,3 +390,80 @@ def get_world_difficulty(username):
         return 1
     difficulty=int(item_levels[0][0]//7)+3
     return difficulty
+
+def try_pickpocket(npc_id,username):
+    npc_agility=get_npc_stats(npc_id)["agility"]+1
+    player_agility=player.get_total_stats(username)["agility"]+1
+    rolls=player_agility+npc_agility
+    roll=random.randint(1,rolls)
+    if roll<=player_agility:
+        sql_get_gold_amount="""
+        SELECT gold
+        FROM npcs
+        WHERE npcs.id=?
+        """
+        gold=db.query(sql_get_gold_amount,[npc_id])[0]["gold"]
+        sql_transfer_gold="""
+        UPDATE users
+        SET gold=gold+?
+        WHERE username=?
+        """
+        db.execute(sql_transfer_gold,[gold,username])
+        sql_set_npc_gold="""
+        UPDATE npcs
+        SET gold=0
+        WHERE id=?
+        """
+        db.execute(sql_set_npc_gold,[npc_id])
+        return gold
+    
+
+def loot_gold_container(container_id,username):
+    sql_get_gold="""
+    UPDATE users
+    SET gold=gold+(SELECT gold
+    FROM containers
+    WHERE id=?
+    AND gold>0)
+    WHERE username=?
+    """
+    result=db.execute(sql_get_gold,[container_id,username])
+    if result["rows_affected"]==1:
+        sql_gold_amount="""
+        SELECT gold
+        FROM containers
+        WHERE id=?
+        """
+        gold_amount=db.query(sql_gold_amount,[container_id])[0]["gold"]
+        sql_set_gold="""
+        UPDATE containers
+        SET gold=0
+        WHERE id=?
+        """
+        db.execute(sql_set_gold,[container_id])
+        return f"You loot {gold_amount} gold"
+    
+def loot_gold_npc(npc_id,username):
+    sql_get_gold="""
+    UPDATE users
+    SET gold=gold+(SELECT gold
+    FROM npcs
+    WHERE id=?
+    AND gold>0)
+    WHERE username=?
+    """
+    result=db.execute(sql_get_gold,[npc_id,username])
+    if result["rows_affected"]==1:
+        sql_gold_amount="""
+        SELECT gold
+        FROM npcs
+        WHERE id=?
+        """
+        gold_amount=db.query(sql_gold_amount,[npc_id])[0]["gold"]
+        sql_set_gold="""
+        UPDATE npcs
+        SET gold=0
+        WHERE id=?
+        """
+        db.execute(sql_set_gold,[npc_id])
+        return f"You loot {gold_amount} gold"

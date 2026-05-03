@@ -1,5 +1,6 @@
 import modules.db as db
 import modules.game as game
+import modules.marketplace as marketplace
 import random,secrets,sqlite3
 
 class World:
@@ -24,7 +25,7 @@ class World:
 
     def get_tile_types(self):
         sql="""
-        SELECT * 
+        SELECT type_name
         FROM tile_types 
         WHERE difficulty<=?
         """
@@ -41,8 +42,15 @@ class World:
             y+=direction[1]
         return x,y
     
+    def add_items_to_blackmarket(self):
+            new_range=random.choice([0,0,0,0,0,1,1,1,2])
+            for i in range(new_range):
+                new_item=Item(self.difficulty,{"location":"blackmarket"})
+                new_item.generate_a_random_item()
+    
     
     def generate_world(self):
+        self.add_items_to_blackmarket()
         tile_types=self.get_tile_types()
         tile_amounts={}
         for tile_type in tile_types:
@@ -189,8 +197,15 @@ class NPC:
         self.tile=tile_id
         self.type=self.generate_npc_type(biome)
         self.name=self.type["npc_type"]
+        self.gold=self.generate_gold()
         self.save_npc_to_database()
         self.items=[]
+
+    def generate_gold(self):
+        if self.type["npc_type"]=="Human":
+            return random.randint(1,20)
+        else:
+            return 0
 
     def create_stat_sheet(self,stat_amount):
         stats={
@@ -286,11 +301,12 @@ class NPC:
     
     def save_npc_to_database(self):
         sql="""
-        INSERT INTO npcs (npc_name,tile,npc_type_id)
-        VALUES (?,?,?)
+        INSERT INTO npcs (npc_name,tile,npc_type_id,gold)
+        VALUES (?,?,?,?)
         RETURNING id
         """
-        result=db.execute(sql,[self.name,self.tile,self.type["id"]])
+        result=db.execute(sql,[self.name,self.tile,self.type["id"],self.gold])
+        print(result)
         self.id=result["rows"][0][0]["id"]
 
 class Container:
@@ -298,27 +314,29 @@ class Container:
         self.id=""
         self.tile=tile_id
         self.type=type
+        self.gold=random.randint(1,20)
         self.save_container_to_database()
+
 
     
     def save_container_to_database(self):
         sql="""
-        INSERT INTO containers (tile,container_type)
-        VALUES (?,?)
+        INSERT INTO containers (tile,container_type,gold)
+        VALUES (?,?,?)
         RETURNING id
         """
-        result=db.execute(sql,[self.tile,self.type])
+        result=db.execute(sql,[self.tile,self.type,self.gold])
         self.id=result["rows"][0][0]["id"]
     def add_items_to_container(self,difficulty):
         if self.type=="barrel":
-            new_item=Item(difficulty,{"location":"container","id":self.id})
             new_range=random.choice([1,1,1,1,1,1,1,1,2])
             for i in range(new_range):
+                new_item=Item(difficulty,{"location":"container","id":self.id})
                 new_item.generate_a_potion()
         if self.type=="chest":
-            new_item=Item(difficulty,{"location":"container","id":self.id})
             new_range=random.choice([1,1,1,1,1,1,1,1,2])
             for i in range(new_range):
+                new_item=Item(difficulty,{"location":"container","id":self.id})
                 new_item.generate_a_random_item()
 
 class Item:
@@ -451,18 +469,15 @@ class Item:
 
         
     def generate_a_random_item(self):
-            sql_get_slots="""
-            SELECT slot_name
-            FROM item_slots
-            """
-            slots=db.query(sql_get_slots)
+            slots=marketplace.get_item_slots()
             slot=random.choice(slots)
             if slot["slot_name"]=="Weapon":
                 self.generate_a_random_weapon(self.level)
             else:
                 self.generate_a_random_armor(slot["slot_name"],self.level)
         
-
+    def define_trader_price(self,condition_modifier,item_level,stats):
+        self.price=(item_level+stats)*condition_modifier
 
     def generate_a_random_weapon(self,stats):
         def define_damage_value(condition_modifier,item_level,weapon_type):
@@ -475,6 +490,10 @@ class Item:
             base_dmg=speed*item_level//1+1
             max_dmg=base_dmg+(base_dmg*condition_modifier)//1+2
             return (speed,base_dmg,max_dmg)
+        def define_trader_price(condition_modifier,item_level):
+            price=item_level*10*condition_modifier//1
+            return int(price)
+
         
         def allocate_stats(weapon_type,stat_amount):
             print(weapon_type)
@@ -551,6 +570,7 @@ class Item:
             self.stats[stat]=allocated_stats[stat]
         self.type="Weapon"
         self.slot="Weapon"
+        self.price=define_trader_price(condition["modifier"],self.level)
         self.define_rarity(condition["modifier"],self.level,stats)
         self.subtype=weapon_category["subcategory_name"]
         self.add_item_to_database()
@@ -570,6 +590,16 @@ class Item:
              "Cloth Armor": 0.2}
             armor=item_level*multiplier*condition_modifier*armor_values[armor_type]//1
             return int(armor)
+        
+        def define_trader_price(condition_modifier,slot,item_level):
+            get_armor_multiplier_sql="""
+            SELECT multiplier
+            FROM armor_multipliers
+            WHERE armor_slot=?
+            """
+            multiplier=db.query(get_armor_multiplier_sql,[slot])[0]["multiplier"]
+            price=item_level*multiplier*condition_modifier//1
+            return int(price)
         
         def allocate_stats(armor_type,stat_amount):
             if armor_type=="Metal Armor":
@@ -643,6 +673,7 @@ class Item:
         armor_names=db.query(sql_get_armor_name,[armor_category["subcategory_name"],slot])
         armor_name=random.choice(armor_names)["armor_name"]
         armor=define_armor_value(condition["modifier"],slot,self.level,armor_category["subcategory_name"])
+        self.price=define_trader_price(condition["modifier"],slot,self.level)
         self.name=condition["condition_name"]+" "+armor_name
         allocated_stats=allocate_stats(armor_category["subcategory_name"],stats)
         for stat in allocated_stats:
@@ -672,10 +703,17 @@ class Item:
         result=db.execute(sql_create_item)
         self.id=result["rows"][0][0]["id"]
         sql_create_item_details="""
-        INSERT INTO item_details (item_id,item_type,trader_price,item_level,rarity)
+        INSERT INTO item_details (item_id,item_type,trader_price,item_level,rarity,slot)
         VALUES (?,(SELECT id
           FROM item_subcategories WHERE subcategory_name="Health Potion")
-          ,?,?,"Common")
+          ,?,?,"Common",(SELECT id 
+          FROM item_slots
+          WHERE slot_name="Potion"))
         """
         result2=db.execute(sql_create_item_details,[self.id,self.price,self.level])
+        sql_create_stat_sheet="""
+        INSERT INTO stat_sheet (stamina,strength,agility,magic,armor,item_id)
+        VALUES (?,?,?,?,?,?)
+        """
+        db.execute(sql_create_stat_sheet,[self.stats["stamina"],self.stats["strength"],self.stats["agility"],self.stats["magic"],self.stats["armor"],self.id])
         self.update_location()

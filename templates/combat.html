@@ -26,7 +26,7 @@
         </ul>
 
         <ul><a href="/logout"><button>Logout</button></a></ul>
-        <ul><a href="/combat_inventory"><button>Inventory</button></a></ul>
+        <ul><a href="/inventory"><button>Inventory</button></a></ul>
 
     </nav>
   </div>
@@ -57,11 +57,12 @@
 
   </div>
 
+<div class="combat_health">
+    <h2>Your Health</h2> 
+    <h2>{{session.health}}/{{session.max_health}}</h2>
+</div>
   <div class="combat_options">
-        <div class="health">
-            <h2>Your Health</h2> 
-            <div>{{session.health}}/{{session.max_health}}</div>
-        </div>
+
         {%for worn_item in player_items%}
         {%if worn_item.slot=="Weapon"%}
         <h2>Weapon Stats</h2>
@@ -133,7 +134,7 @@
   <div class="npc_info">
     
             <h2>{{npc_health.name}}'s' Health</h2>
-            <div>{{npc_health.current}}/{{npc_health.max}}</div>
+            <h2>{{npc_health.current}}/{{npc_health.max}}</h2>
 
 
   </div>

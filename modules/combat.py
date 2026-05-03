@@ -33,6 +33,13 @@ def calculate_attacks(combat_log,attack,username):
                     player_armor_types["cloth"]+=1
                 case "Metal Armor":
                     player_armor_types["metal"]+=1
+    acceptable_styles=["Punch"]
+    if player_weapon:
+        acceptable_styles.append(player_weapon["damage_style"])
+        if player_weapon["secondary_style"]:
+            acceptable_styles.append(player_weapon["secondary_style"])
+    if attack not in acceptable_styles:
+        return "Can't attack with that style"
     for item in npc_items:
         if item["slot"]=="Weapon":
             npc_weapon=item

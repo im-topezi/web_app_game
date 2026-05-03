@@ -108,12 +108,77 @@
         {%endif%}
     </td>
     <td>
+        <ul>
     {%for item in offer.offered_items%}
-    
-    <ul>
-        {{item.item_name}}
-    </ul>
+<div class="equipment">
+                    {{ item.item_name }}
+                    <span class="equipment_info">
+                    <table>
+                    <tr class="{{item.rarity}}">
+                        <td>{{item.item_name}}</td>
+                        <td>{{item.type}}</td>
+                        <td>Level: {{item.item_level}}</td>
+                        <td><div class="{{item.rarity}}">{{item.rarity}}</div></td>
+                        <td>
+                            <ul>
+                                {%if item.magic%}
+                                <li>
+                                    Magic: {{item.magic}}
+                                </li>
+                                {%endif%}
+                                {%if item.agility%}
+                                <li>
+                                    
+                                    Agility: {{item.agility}}
+                
+                                </li>
+                                {%endif%}
+
+                                {%if item.strength%}
+                                <li>
+                                    
+                                    Strength: {{item.strength}}
+                
+                                </li>
+                                {%endif%}
+                                {%if item.stamina%}
+                                <li>
+                                    Stamina: {{item.stamina}}
+                                </li>
+                                {%endif%}
+                                {%if item.armor%}
+                                <li>
+                                    
+                                    Armor: {{item.armor}}
+                
+                                </li>
+                                {%endif%}
+                            </ul>
+
+                        </td>
+                        <td>
+                        {%if item.slot=="Weapon"%}
+                        <ul>
+                            <li>
+                                Damage: {{item.min_damage}}-{{item.max_damage}}
+                            </li>
+                            <li>
+                                Speed: {{item.weapon_speed}}
+                            </li>
+                            <li>
+                                Damage styles: {{item.damage_style}} {%if item.secondary_style%}/ {{item.secondary_style}} {%endif%}
+                            </li>
+                        </ul>
+                        {%endif%}
+                        </td>
+                        <td>Trader price: {{item.trader_price}}</td>
+
+                    </tr>
+                    </table>
+                    </span>
+                    </div>
     {%endfor%}
+        </ul>
     </td>
     <td>
         {{offer.buyer_name}}

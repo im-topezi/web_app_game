@@ -257,7 +257,7 @@ CREATE TABLE armor_names (
     armor_name TEXT,
     slot TEXT,
     item_type TEXT,
-    FOREIGN KEY (slot) REFERENCES item_slots(item_slot),
+    FOREIGN KEY (slot) REFERENCES item_slots(slot_name),
     FOREIGN KEY (item_type) REFERENCES item_subcategories(subcatergory_name)
 );
 
@@ -347,6 +347,7 @@ INSERT INTO item_slots (slot_name) VALUES ("Chest");
 INSERT INTO item_slots (slot_name) VALUES ("Legs");
 INSERT INTO item_slots (slot_name) VALUES ("Hands");
 INSERT INTO item_slots (slot_name) VALUES ("Feet");
+INSERT INTO item_slots (slot_name) VALUES ("Potion");
 
 INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Head",5);
 INSERT INTO armor_multipliers (armor_slot,multiplier) VALUES ("Shoulders",6);

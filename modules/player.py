@@ -130,6 +130,7 @@ def get_player_items(username):
     AND marketplace_listings.item_id IS NULL
     AND offered_items.item_id IS NULL
     AND equipped_items.item_id IS NULL
+    ORDER BY item_slots.slot_name,item_subcategories.subcategory_name,item_details.item_level,items.item_name
     """
     items=db.query(sql,[username])
     return items
@@ -165,10 +166,17 @@ def drop_item(item_id,player):
     if result["rows_affected"]>=1:
         return "Item dropped"
     
+def check_player_exists(username):
+    sql="""
+    SELECT id
+    FROM users
+    WHERE username=?
+    """
+    return db.query(sql,[username])
 
 def get_user_worlds(username):
     sql="""
-    SELECT *
+    SELECT id,world_name,difficulty,visited
     FROM worlds
     WHERE player=(SELECT id
     FROM users WHERE username=?)
@@ -253,6 +261,20 @@ def deal_damage_to_player(username,damage):
         """
         result=db.execute(sql_deal_damage_to_player,[damage,username])
 
+def unequip_item(item_id,username):
+    sql="""
+    DELETE FROM equipped_items
+    WHERE item_id=?
+    AND player_id=(SELECT id 
+    FROM users 
+    WHERE username=?)
+    """
+    result=db.execute(sql,[item_id,username])
+    if result["rows_affected"]>=1:
+        return "Item unequipped"
+    else:
+        return "You can't unequip that"
+
 def use_item(item_id,username):
     sql="""
     SELECT items.id,items.player,items.item_name,item_slots.slot_name AS slot,item_level
@@ -334,3 +356,23 @@ def delete_combat_log(username):
     WHERE username=?)
     """
     db.execute(sql,[username])
+
+def sell_item_on_blackmarket(item_id,username):
+
+    sql_transfer_money="""
+    UPDATE users
+    SET gold=gold+(SELECT trader_price 
+    FROM item_details
+    WHERE item_id=?)
+    WHERE username=?
+    """
+    db.execute(sql_transfer_money,[item_id,username])
+    sql_transfer_item="""
+    UPDATE items
+    SET player=NULL,container=NULL,npc=NULL
+    WHERE id=? AND player=(
+    SELECT id
+    FROM users
+    WHERE username=?)
+    """
+    return db.execute(sql_transfer_item,[item_id,username])
