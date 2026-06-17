@@ -85,13 +85,13 @@ def calculate_attacks(combat_log,attack,username):
                     armor_modifier=1
                     match attack:
                         case "Slash":
-                            armor_modifier+=1+npc_armor_types["metal"]*0.1
-                            armor_modifier+=1-npc_armor_types["cloth"]*0.1
+                            armor_modifier+=npc_armor_types["metal"]*0.1
+                            armor_modifier-=npc_armor_types["cloth"]*0.1
                         case "Stab":
-                            armor_modifier+=1+npc_armor_types["metal"]*0.1
-                            armor_modifier+=1-npc_armor_types["leather"]*0.1
+                            armor_modifier+=npc_armor_types["metal"]*0.1
+                            armor_modifier-=npc_armor_types["leather"]*0.1
                         case "Crush":
-                            armor_modifier+=1-npc_armor_types["metal"]*0.1
+                            armor_modifier-=npc_armor_types["metal"]*0.1
                     armor_absorption=1+npc_stats["armor"]*armor_modifier/1000
                     final_damage=int((damage/armor_absorption)//1)
                     print(f"Final damage: {final_damage}, damage: {damage}, armor abs: {armor_absorption}")
@@ -123,12 +123,12 @@ def calculate_attacks(combat_log,attack,username):
                     armor_modifier=1
                     match attack:
                         case "Fire":
-                            armor_modifier+=1-npc_armor_types["metal"]*0.1
+                            armor_modifier-=npc_armor_types["metal"]*0.1
                         case "Frost":
-                            armor_modifier+=1-npc_armor_types["cloth"]*0.1
+                            armor_modifier-=npc_armor_types["cloth"]*0.1
                         case "Shock":
-                            armor_modifier+=1+npc_armor_types["metal"]*0.1
-                            armor_modifier+=1-npc_armor_types["leather"]*0.1
+                            armor_modifier-=npc_armor_types["metal"]*0.1
+                            armor_modifier+=npc_armor_types["leather"]*0.1
                     final_damage=int((damage/armor_modifier)//1)
                     player_damage+=final_damage
                     print(f"Final damage: {final_damage}, damage: {damage}")
@@ -210,13 +210,13 @@ def calculate_attacks(combat_log,attack,username):
                 armor_modifier=1
                 match npc_attack:
                     case "Slash":
-                        armor_modifier+=1+player_armor_types["metal"]*0.1
-                        armor_modifier+=1-player_armor_types["cloth"]*0.1
+                        armor_modifier+=player_armor_types["metal"]*0.1
+                        armor_modifier-=player_armor_types["cloth"]*0.1
                     case "Stab":
-                        armor_modifier+=1+player_armor_types["metal"]*0.1
-                        armor_modifier+=1-player_armor_types["leather"]*0.1
+                        armor_modifier+=player_armor_types["metal"]*0.1
+                        armor_modifier-=player_armor_types["leather"]*0.1
                     case "Crush":
-                        armor_modifier+=1-player_armor_types["metal"]*0.1
+                        armor_modifier-=player_armor_types["metal"]*0.1
                 armor_absorption=1+player_stats["armor"]*armor_modifier/1000
                 final_damage=int((damage/armor_absorption)//1)
                 npc_damage+=final_damage
@@ -250,12 +250,12 @@ def calculate_attacks(combat_log,attack,username):
                 armor_modifier=1
                 match attack:
                     case "Fire":
-                        armor_modifier+=1-player_armor_types["metal"]*0.1
+                        armor_modifier-=player_armor_types["metal"]*0.1
                     case "Frost":
-                        armor_modifier+=1-player_armor_types["cloth"]*0.1
+                        armor_modifier-=player_armor_types["cloth"]*0.1
                     case "Shock":
-                        armor_modifier+=1+player_armor_types["metal"]*0.1
-                        armor_modifier+=1-player_armor_types["leather"]*0.1
+                        armor_modifier-=player_armor_types["metal"]*0.1
+                        armor_modifier+=player_armor_types["leather"]*0.1
                 final_damage=int((damage/armor_modifier)//1)
                 npc_damage+=final_damage
                 print(f"Final damage: {final_damage}, damage: {damage}")

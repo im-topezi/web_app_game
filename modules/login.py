@@ -5,11 +5,17 @@ from werkzeug.security import generate_password_hash,check_password_hash
 def create_new_user(username,password1,password2):
     if password1 != password2:
         return "Passwords dont match"
+    if len(username)>10:
+        return "Username can't be longer than 10 characters"
+    if not username.islower():
+        return "Characters in username must be lowercase"
+    if not username.isalnum():
+        return "Username can contain letters and numbers only"
     password_hash=generate_password_hash(password1)
     sql="""
     INSERT INTO users (username, password_hash) 
     VALUES (?,?)
-    RETURNING *
+    RETURNING id
     """
     result=db.execute(sql,[username,password_hash])
     if type(result["error"]) is sqlite3.IntegrityError:
