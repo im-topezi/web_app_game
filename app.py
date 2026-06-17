@@ -427,7 +427,7 @@ def accept_trade_offer():
 @cant_be_in_game
 def generate_new_world():
     check_csrf()
-    if request.form["world_name"]:
+    if request.form["world_name"] and len(request.form["world_name"])<21:
         difficulty=game.get_world_difficulty(session["username"])
         world.World(difficulty,session["username"],request.form["world_name"]).generate_world()
         flash("New world generated!")

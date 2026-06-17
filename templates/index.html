@@ -13,7 +13,7 @@
     <form action="/new_world" method="post">
         World name:
         <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
-        <input type="text" name="world_name"/>
+        <input type="text" name="world_name" maxlength="20"/>
         <input type="submit" value="Generate a new world!"/>
     </form>
     
