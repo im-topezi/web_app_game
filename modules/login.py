@@ -5,12 +5,20 @@ from werkzeug.security import generate_password_hash,check_password_hash
 def create_new_user(username,password1,password2):
     if password1 != password2:
         return "Passwords dont match"
+    if not password1:
+        return "You must have a password"
+    if not username:
+        return "You must have a username"
+    if len(password1)<5:
+        return "Password must be at least 5 characters"
     if len(username)>10:
         return "Username can't be longer than 10 characters"
     if not username.islower():
         return "Characters in username must be lowercase"
     if not username.isalnum():
         return "Username can contain letters and numbers only"
+    if len(password1)>20:
+        return "Password can't be more than 20 characters"
     password_hash=generate_password_hash(password1)
     sql="""
     INSERT INTO users (username, password_hash) 

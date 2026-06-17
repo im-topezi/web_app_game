@@ -8,8 +8,8 @@
 <h2>Register</h2>
         <form action="/register" method="post">
             <input type="text" name="username" value="{{ username }}" placeholder="username" maxlength="10"/>
-            <input type="password" name="password1" placeholder="password"/>
-            <input type="password" name="password2" placeholder="password again"/>
+            <input type="password" name="password1" placeholder="password" maxlength="20" minlength="5"/>
+            <input type="password" name="password2" placeholder="password again" maxlength="20" minlength="5"/>
             <input type="submit" value="Register"/>
         </form>
 </div>
